@@ -127,36 +127,34 @@
 
   /* ---------- a phone held sideways ---------- */
   @media (orientation:landscape) and (max-height:600px){
-    #app{gap:3px;padding:3px;justify-content:flex-start;height:100dvh;max-height:100dvh;overflow:hidden;}
-    #bar{gap:4px;padding:0;flex-wrap:nowrap;justify-content:center;}
+    #app{gap:2px;padding:2px 2px 0;justify-content:flex-start;height:100dvh;max-height:100dvh;overflow:hidden;}
+    /* a thinner bar frees more height, which makes the canvas taller AND wider */
+    #bar{gap:4px;padding:0;flex-wrap:nowrap;justify-content:center;flex:0 0 auto;}
     #bar .brand{display:none;}
-    .btn{padding:5px 9px;font-size:10px;letter-spacing:0;border-width:1px;}
-    .btn .bl{font-size:10px;}
-    #bSound svg{width:12px;height:12px;}
+    .btn{padding:3px 7px;font-size:9px;letter-spacing:0;border-width:1px;}
+    .btn .bl{font-size:9px;}
+    #bSound svg{width:11px;height:11px;}
     #tag{display:none;}
     #promoStrip{display:none;}
-    #frame{border-width:2px;border-radius:5px;}
-    #stage{gap:3px;padding:0;align-items:stretch;width:100%;justify-content:center;flex:1 1 auto;min-height:0;overflow:hidden;}
-    /* the pads and labels match the canvas height, centred on it */
-    #padL,#padR,.padLabel{align-self:center;height:calc(100dvh - 58px);max-height:100%;}
-    /* the canvas keeps its 16:10 shape, sized by height, capped so it never
-       overflows the row width. width follows from aspect-ratio, so it can never
-       collapse to zero. */
-    #frame{flex:0 0 auto;}
+    #frame{border-width:2px;border-radius:5px;flex:0 0 auto;}
+    /* the stage spreads its children edge to edge: pads pinned to the screen sides,
+       labels tucked beside them, the canvas taking the middle */
+    #stage{gap:2px;padding:0;align-items:center;width:100%;justify-content:space-between;flex:1 1 auto;min-height:0;overflow:hidden;}
+    #padL,#padR,.padLabel{align-self:center;height:calc(100dvh - 42px);max-height:100%;}
     canvas{
       display:block;
-      height:calc(100dvh - 58px);
+      height:calc(100dvh - 42px);
       max-height:100%;
       width:auto;
       aspect-ratio:960 / 600;
-      max-width:calc(100vw - 188px);   /* leaves room for both pads and both labels */
+      max-width:calc(100vw - 150px);   /* pads + labels are slimmer now, so more width for the game */
     }
-    #padL{width:48px;flex:0 0 48px;}
-    #padR{width:60px;flex:0 0 60px;}
-    #padR .ring{width:48px;height:48px;font-size:10px;}
-    #knob{width:40px;height:40px;border-radius:10px;}
-    .padLabel{flex:0 0 28px;font-size:10px;gap:5px;}
-    .padLabel .arrow{font-size:12px;}
+    #padL{width:44px;flex:0 0 44px;}
+    #padR{width:52px;flex:0 0 52px;}
+    #padR .ring{width:44px;height:44px;font-size:9px;}
+    #knob{width:38px;height:38px;border-radius:10px;}
+    .padLabel{flex:0 0 24px;font-size:9px;gap:4px;}
+    .padLabel .arrow{font-size:11px;}
   }
   @media (orientation:portrait){
     body.touch #rotate{display:flex;}
@@ -336,7 +334,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;bottom:2px;right:4px;font:10px monospace;color:rgba(125,154,130,.5);z-index:60;pointer-events:none;">build 9</div>
+  <div id="buildTag" style="position:fixed;bottom:2px;right:4px;font:10px monospace;color:rgba(125,154,130,.5);z-index:60;pointer-events:none;">build 10</div>
 </div>
 
 <div id="over">
@@ -506,7 +504,22 @@ const WHALE_SKINS = [
 const SIZE = { chickenBalloon:0.74, eggBalloon:0.74, bag:0.50, shark:0.74,
                whale:0.66, sub:0.70, bomber:0.70, hammer:0.74, ray:0.76, board:1 };
 let intro = 0;
-const TOUCH = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+/* a phone is a device whose primary pointer is coarse (a finger) AND whose screen
+   is small. a touchscreen laptop has a fine pointer available, so it gets the
+   normal mouse/keyboard desktop experience, not the on-screen pads. */
+function detectTouch(){
+  try {
+    const coarse = window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
+    const noHover = window.matchMedia && window.matchMedia("(hover:none)").matches;
+    const smallest = Math.min(window.innerWidth || 9999, window.innerHeight || 9999);
+    const hasTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+    /* treat as phone only when it is genuinely a touch-first small screen */
+    return hasTouch && (coarse || noHover) && smallest <= 820;
+  } catch(e){
+    return ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+  }
+}
+const TOUCH = detectTouch();
 try { if (TOUCH) document.body.classList.add("touch"); } catch(e){}
 let inputMode = TOUCH ? "touch" : null;   /* null until the player picks on desktop */
 let aimY = 300;                            /* the height the archer is heading for */
@@ -588,9 +601,21 @@ window.addEventListener("keydown", e => {
   if (e.code === "KeyM") muted = !muted;
   if (e.code === "KeyP" && state === "play") paused = !paused;
   if (e.code === "KeyR" && state === "play") startLevel(levelIndex);
+  /* on the title screen, once a mode is chosen, any key at all starts the game */
+  if (state === "title" && inputMode){ newRun(); return; }
   if (e.code === "Space" || e.code === "Enter") act();
 });
 window.addEventListener("keyup", e => { keys[e.code] = false; });
+
+/* a click anywhere on the page also starts the game once a mode is chosen */
+window.addEventListener("mousedown", e => {
+  if (!TOUCH && state === "title" && inputMode){
+    /* ignore clicks on the control bar buttons themselves */
+    const bar = $("bar");
+    if (bar && bar.contains && bar.contains(e.target)) return;
+    newRun();
+  }
+}, true);
 
 function act(){
   if (state === "title"){
@@ -1480,37 +1505,91 @@ function drawHammer(t){
 }
 function drawWhale(t){
   const sk = WHALE_SKINS[(t.skin || 0) % WHALE_SKINS.length];
-  ctx.save(); ctx.translate(t.x,t.y); ctx.scale(-1,1);
+  ctx.save(); ctx.translate(t.x, t.y); ctx.scale(-1, 1);   /* face left, moving right-to-left */
   if (t.flash > 0){ ctx.shadowColor = "#fff"; ctx.shadowBlur = 20; }
-  const wag = Math.sin(time*0.06+t.phase)*0.2;
+  const wag = Math.sin(time * 0.05 + t.phase) * 0.16;
 
-  ctx.fillStyle = sk.back;
-  ctx.beginPath(); ctx.moveTo(62,2); ctx.quadraticCurveTo(30,-34,-20,-26); ctx.quadraticCurveTo(-60,-20,-62,0);
-  ctx.quadraticCurveTo(-56,22,-14,28); ctx.quadraticCurveTo(32,32,62,2); ctx.closePath(); ctx.fill();
+  /* the spout, a puff of water from the blowhole, on a slow cycle */
+  const blow = (time * 1.4 + t.phase * 40) % 150;
+  if (blow < 42){
+    const p = blow / 42;
+    ctx.save();
+    ctx.globalAlpha = (1 - p) * 0.7;
+    ctx.fillStyle = "rgba(220,240,255,0.9)";
+    for (let i = 0; i < 5; i++){
+      const a2 = -1.2 + i * 0.28;
+      const rr = 6 + p * 20;
+      const sx = 8 + Math.cos(a2) * rr * 0.5;
+      const sy = -34 - p * 30 + Math.sin(a2) * rr;
+      ctx.beginPath(); ctx.arc(sx, sy, 3 + (1 - p) * 3, 0, 6.29); ctx.fill();
+    }
+    ctx.restore();
+  }
 
-  ctx.fillStyle = sk.belly;
-  ctx.beginPath(); ctx.moveTo(56,10); ctx.quadraticCurveTo(20,30,-18,26); ctx.quadraticCurveTo(24,30,56,10); ctx.closePath(); ctx.fill();
-
-  ctx.strokeStyle = "rgba(0,0,0,0.16)"; ctx.lineWidth = 2;
-  for (let i = 0; i < 5; i++){ ctx.beginPath(); ctx.moveTo(24+i*8,12); ctx.lineTo(20+i*8,26); ctx.stroke(); }
-
+  /* the tail flukes, wide and notched, swinging gently */
+  ctx.save(); ctx.translate(-52, 2); ctx.rotate(wag);
   ctx.fillStyle = sk.fin;
-  ctx.beginPath(); ctx.moveTo(4,14); ctx.quadraticCurveTo(-6,34,-22,30); ctx.quadraticCurveTo(-8,22,4,14); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(-2,-24); ctx.lineTo(-12,-40); ctx.lineTo(-24,-22); ctx.closePath(); ctx.fill();
-
-  ctx.save(); ctx.translate(-60,0); ctx.rotate(wag);
-  ctx.fillStyle = sk.fin;
-  ctx.beginPath(); ctx.moveTo(4,0); ctx.quadraticCurveTo(-16,-8,-30,-22); ctx.quadraticCurveTo(-16,-6,-18,0);
-  ctx.quadraticCurveTo(-16,8,-30,22); ctx.quadraticCurveTo(-14,8,4,0); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(8, 0);
+  ctx.quadraticCurveTo(-10, -4, -26, -20);
+  ctx.quadraticCurveTo(-18, -18, -14, -8);   /* upper fluke */
+  ctx.quadraticCurveTo(-10, -2, -6, 0);
+  ctx.quadraticCurveTo(-10, 2, -14, 8);
+  ctx.quadraticCurveTo(-18, 18, -26, 20);    /* lower fluke */
+  ctx.quadraticCurveTo(-10, 4, 8, 0);
+  ctx.closePath(); ctx.fill();
   ctx.restore();
 
-  ctx.fillStyle = sk.fin;
-  ctx.beginPath(); ctx.ellipse(30,-22,4,2.6,0,0,6.29); ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.20)";
-  for (let i = 0; i < 4; i++){ ctx.beginPath(); ctx.ellipse(-6+i*14,-12+(i%2)*7,5,3.4,0.3,0,6.29); ctx.fill(); }
+  /* the body, a fuller teardrop that tapers to the tail */
+  ctx.fillStyle = sk.back;
+  ctx.beginPath();
+  ctx.moveTo(54, 0);
+  ctx.quadraticCurveTo(44, -22, 10, -24);
+  ctx.quadraticCurveTo(-30, -24, -50, -6);   /* back down to the tail stock */
+  ctx.quadraticCurveTo(-40, 0, -50, 6);
+  ctx.quadraticCurveTo(-30, 24, 10, 24);
+  ctx.quadraticCurveTo(44, 22, 54, 0);
+  ctx.closePath(); ctx.fill();
 
-  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(44,-6,4,0,6.29); ctx.fill();
-  ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(45,-6,2.1,0,6.29); ctx.fill();
+  /* the pale underside */
+  ctx.fillStyle = sk.belly;
+  ctx.beginPath();
+  ctx.moveTo(48, 8);
+  ctx.quadraticCurveTo(16, 26, -20, 20);
+  ctx.quadraticCurveTo(10, 22, 48, 8);
+  ctx.closePath(); ctx.fill();
+
+  /* the throat grooves */
+  ctx.strokeStyle = "rgba(0,0,0,0.14)"; ctx.lineWidth = 1.6;
+  for (let i = 0; i < 5; i++){ ctx.beginPath(); ctx.moveTo(30 + i*7, 12); ctx.lineTo(26 + i*7, 22); ctx.stroke(); }
+
+  /* the side flipper */
+  ctx.fillStyle = sk.fin;
+  ctx.beginPath();
+  ctx.moveTo(14, 14);
+  ctx.quadraticCurveTo(2, 34, -16, 30);
+  ctx.quadraticCurveTo(-2, 22, 8, 14);
+  ctx.closePath(); ctx.fill();
+
+  /* a small dorsal fin */
+  ctx.beginPath();
+  ctx.moveTo(-8, -22); ctx.quadraticCurveTo(-16, -34, -24, -22);
+  ctx.closePath(); ctx.fill();
+
+  /* the blowhole */
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.beginPath(); ctx.ellipse(8, -24, 3, 2, 0, 0, 6.29); ctx.fill();
+
+  /* mottled skin */
+  ctx.fillStyle = "rgba(255,255,255,0.14)";
+  for (let i = 0; i < 4; i++){ ctx.beginPath(); ctx.ellipse(2 + i*12, -10 + (i%2)*8, 4, 2.6, 0.3, 0, 6.29); ctx.fill(); }
+
+  /* the eye and a friendly mouth line */
+  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(42, -4, 3.4, 0, 6.29); ctx.fill();
+  ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(43, -4, 1.9, 0, 6.29); ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(50, 6); ctx.quadraticCurveTo(40, 12, 30, 10); ctx.stroke();
+
   ctx.restore();
   pips(t);
 }
@@ -2132,7 +2211,7 @@ function drawTitle(){
   }
   ctx.fillStyle = Math.floor(time/30)%2 ? "#ffd45e" : "#fff";
   ctx.font = "bold 20px 'Courier New', monospace";
-  if (TOUCH || inputMode) ctx.fillText(TOUCH ? "TAP TO DEFEND THE SWAMP" : "PRESS FIRE TO DEFEND THE SWAMP", W/2, 504);
+  if (TOUCH || inputMode) ctx.fillText(TOUCH ? "TAP TO DEFEND THE SWAMP" : "CLICK ANYWHERE OR PRESS ANY KEY TO START", W/2, 504);
   ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "12px 'Courier New', monospace";
   ctx.fillText("A RETRO ARCADE TRIBUTE   1 PLAYER", W/2, 556);
 }
@@ -2487,7 +2566,9 @@ function render(){
    ============================================================ */
 const $ = id => document.getElementById(id);
 
-/* the aim pad down the left */
+/* the aim control. it works anywhere on the LEFT side of the screen, around and
+   behind the slider, not just precisely on the bar, because everyone holds a
+   phone a little differently. the slider itself is the visual guide. */
 (function(){
   const pad = $("padL"), knob = $("knob");
   if (!pad) return;
@@ -2496,20 +2577,38 @@ const $ = id => document.getElementById(id);
     const r = pad.getBoundingClientRect();
     const f = Math.max(0, Math.min(1, (cy - r.top) / r.height));
     aimY = croc.minY + (croc.maxY - croc.minY) * f;
-    knob.style.top = (f * 100) + "%";
+    if (knob) knob.style.top = (f * 100) + "%";
   };
-  pad.addEventListener("touchstart", e => {
-    e.preventDefault();
-    pad.classList.add("used");
-    const t = e.changedTouches[0]; id = t.identifier; setFromY(t.clientY);
+  /* the whole left zone: from the screen edge to just before the game frame */
+  const leftZoneHas = cx => {
+    const frame = $("frame");
+    if (!frame) return cx < window.innerWidth * 0.32;
+    const fr = frame.getBoundingClientRect();
+    return cx < fr.left;   /* anywhere left of the playfield */
+  };
+  window.addEventListener("touchstart", e => {
+    if (!TOUCH) return;
+    for (const t of e.changedTouches){
+      if (id === null && leftZoneHas(t.clientX)){
+        e.preventDefault();
+        pad.classList.add("used");
+        id = t.identifier; setFromY(t.clientY);
+      }
+    }
   }, {passive:false});
-  pad.addEventListener("touchmove", e => {
-    e.preventDefault();
-    for (const t of e.changedTouches) if (t.identifier === id) setFromY(t.clientY);
+  window.addEventListener("touchmove", e => {
+    if (id === null) return;
+    for (const t of e.changedTouches){
+      if (t.identifier === id){ e.preventDefault(); setFromY(t.clientY); }
+    }
   }, {passive:false});
-  pad.addEventListener("touchend", e => {
+  window.addEventListener("touchend", e => {
     for (const t of e.changedTouches) if (t.identifier === id) id = null;
   });
+  window.addEventListener("touchcancel", e => {
+    for (const t of e.changedTouches) if (t.identifier === id) id = null;
+  });
+  /* mouse, for a touchless drag on the bar itself */
   pad.addEventListener("mousedown", e => { setFromY(e.clientY); id = "m"; });
   window.addEventListener("mousemove", e => { if (id === "m") setFromY(e.clientY); });
   window.addEventListener("mouseup", () => { if (id === "m") id = null; });
