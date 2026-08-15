@@ -334,7 +334,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;bottom:2px;right:4px;font:10px monospace;color:rgba(125,154,130,.5);z-index:60;pointer-events:none;">build 11</div>
+  <div id="buildTag" style="position:fixed;bottom:6px;right:8px;font:bold 14px monospace;color:#c9a227;z-index:60;pointer-events:none;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:4px;">BUILD 12</div>
 </div>
 
 <div id="over">
@@ -521,6 +521,7 @@ function enableTouchMode(){
   try { document.body.classList.add("touch"); } catch(e){}
   try { updateCursor(); } catch(e){}
   try { refreshCaption(); } catch(e){}
+  try { setTimeout(enforceCanvasSize, 30); } catch(e){}
 }
 /* the first genuine touch anywhere switches the whole game into phone mode */
 window.addEventListener("touchstart", enableTouchMode, { once:true, passive:true, capture:true });
@@ -748,7 +749,7 @@ function startLevel(i){
   spawnTimer = 40;
   croc.hp = 1; croc.maxHp = 1; croc.hurt = 0; croc.invuln = 0; croc.cool = 0; croc.recoil = 0;
   croc.env = L.env;
-  croc.minY = 118; croc.maxY = 580; croc.y = 430;
+  croc.minY = 130; croc.maxY = 548; croc.y = 430;
   keyTarget = croc.y; aimY = croc.y;
   intro = 108;
   for (let k = 0; k < (L.env === "sky" ? 6 : 40); k++){
@@ -2994,6 +2995,63 @@ setInterval(() => {
   requestAnimationFrame(frame);
 })();
 
+/* ============================================================
+   HARD SIZE ENFORCER (phone landscape)
+   Measures the real space and sets the canvas pixels directly, so the entire
+   playfield including the HUD is always visible no matter what the browser does.
+   ============================================================ */
+function enforceCanvasSize(){
+  try {
+    const cv = document.getElementById("game");
+    const bar = document.getElementById("bar");
+    if (!cv) return;
+
+    /* only take over on a real phone in landscape; desktop uses its own clean layout */
+    const isPhoneLandscape = TOUCH &&
+      (window.innerWidth > window.innerHeight) &&
+      (window.innerHeight <= 600);
+
+    if (!isPhoneLandscape){
+      /* let the desktop CSS rule the canvas */
+      cv.style.width = "";
+      cv.style.height = "";
+      cv.style.maxWidth = "";
+      cv.style.maxHeight = "";
+      return;
+    }
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const barH = bar ? bar.getBoundingClientRect().height : 34;
+    /* space left after the bar (top) and the side pads+labels */
+    const reservedSides = 44 + 52 + 24 + 24 + 12;   /* padL padR labL labR gaps */
+    const availH = vh - barH - 8;
+    const availW = vw - reservedSides;
+
+    /* fit 960x600 inside avail, keeping aspect, taking whichever bound is tighter */
+    const ar = 960 / 600;
+    let w = availW, h = w / ar;
+    if (h > availH){ h = availH; w = h * ar; }
+
+    cv.style.width = Math.floor(w) + "px";
+    cv.style.height = Math.floor(h) + "px";
+    cv.style.maxWidth = "none";
+    cv.style.maxHeight = "none";
+
+    /* match the pads to the canvas height so the knob travels the full range */
+    ["padL","padR"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.height = Math.floor(h) + "px";
+    });
+    document.querySelectorAll(".padLabel").forEach(el => {
+      el.style.height = Math.floor(h) + "px";
+    });
+  } catch(e){}
+}
+window.addEventListener("resize", enforceCanvasSize);
+window.addEventListener("orientationchange", () => setTimeout(enforceCanvasSize, 150));
+setTimeout(enforceCanvasSize, 60);
+setTimeout(enforceCanvasSize, 400);
 let last = performance.now();
 function loop(now){
   let dt = (now - last) / 16.6667; last = now;
