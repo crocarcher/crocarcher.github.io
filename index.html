@@ -78,9 +78,12 @@
     background:#c9a227;border:3px solid #6b4a1f;pointer-events:none;
   }
   #padL .hint{
-    font-family:"Courier New",monospace;font-size:10px;color:#5e7a63;
+    font-family:"Courier New",monospace;font-size:10px;color:#9fe870;
     writing-mode:vertical-rl;letter-spacing:2px;pointer-events:none;
+    animation:pulse 1.1s ease-in-out infinite;
   }
+  #padL.used .hint{display:none;}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
   #padR{
     width:104px;flex:0 0 104px;
     border:2px solid #6b4a1f;border-radius:10px;
@@ -96,6 +99,14 @@
     transition:background .08s,transform .08s;
   }
   #padR.hit .ring{background:rgba(201,162,39,.55);transform:scale(.94);}
+  #padR{flex-direction:column;gap:4px;}
+  .fireHint{
+    font-family:"Courier New",monospace;font-size:9px;color:#9fe870;
+    text-align:center;line-height:1.3;animation:pulse 1.1s ease-in-out infinite;
+    pointer-events:none;
+  }
+  .fireHint span{display:block;font-size:8px;letter-spacing:1px;}
+  #padR.used .fireHint{display:none;}
 
   #tag{
     text-align:center;color:#7d9a82;font-size:11px;letter-spacing:2px;
@@ -105,16 +116,20 @@
 
   /* ---------- a phone held sideways ---------- */
   @media (orientation:landscape) and (max-height:560px){
-    #app{gap:5px;padding:4px;}
+    #app{gap:3px;padding:2px 0;}
+    #bar{gap:5px;}
     #bar .brand{display:none;}
-    .btn{padding:6px 9px;font-size:11px;}
+    .btn{padding:4px 7px;font-size:10px;letter-spacing:0;}
+    .btn svg{width:11px;height:11px;}
     #tag{display:none;}
+    #promoStrip{max-width:100%;}
     #frame{border-width:3px;border-radius:6px;}
-    canvas{max-height:calc(100dvh - 76px);width:auto;}
-    #padL{width:52px;flex:0 0 52px;}
-    #padR{width:84px;flex:0 0 84px;}
-    #padR .ring{width:68px;height:68px;font-size:11px;}
-    #knob{width:38px;height:38px;}
+    #stage{gap:4px;}
+    canvas{max-height:calc(100dvh - 58px);width:auto;}
+    #padL{width:58px;flex:0 0 58px;}
+    #padR{width:92px;flex:0 0 92px;}
+    #padR .ring{width:76px;height:76px;font-size:11px;}
+    #knob{width:42px;height:42px;}
   }
   @media (orientation:portrait){
     body.touch #rotate{display:flex;}
@@ -186,6 +201,7 @@
   }
   #rotate .big{font-family:"Courier New",monospace;color:#c9a227;font-size:20px;letter-spacing:2px;}
   #rotate .sub{color:#7d9a82;font-size:13px;}
+  #demo{width:min(88vw,480px);height:auto;border:3px solid #6b4a1f;border-radius:8px;background:#0a3d5c;}
 </style>
 </head>
 <body>
@@ -205,7 +221,10 @@
   <div id="stage">
     <div id="padL"><span class="hint">AIM</span><div id="knob"></div></div>
     <div id="frame"><canvas id="game" width="960" height="600"></canvas></div>
-    <div id="padR"><div class="ring">FIRE</div></div>
+    <div id="padR">
+    <div class="fireHint" id="fireHint">👆<span>PRESS TO FIRE</span></div>
+    <div class="ring">FIRE</div>
+  </div>
   </div>
 
   <div id="promoStrip"></div>
@@ -248,6 +267,7 @@
 </div>
 
 <div id="rotate">
+  <canvas id="demo" width="480" height="300"></canvas>
   <div class="big">TURN YOUR PHONE SIDEWAYS</div>
   <div class="sub">Croc Archer is played in landscape.</div>
 </div>
@@ -265,9 +285,9 @@ const SCORE_API = "https://script.google.com/macros/s/AKfycbwQ80lTQyhQqrq3BzgO5F
    to hide every slot while you look at the rest of the game. */
 const SHOW_PROMOS = true;
 const PROMOS = [
-  { label:"SLOT 1", title:"PROMO SLOT ONE", line:"Your first link goes here", url:"#", cta:"Open", tint:"#b3241c" },
-  { label:"SLOT 2", title:"PROMO SLOT TWO", line:"Your second link goes here", url:"#", cta:"Open", tint:"#2f6fb0" },
-  { label:"SLOT 3", title:"PROMO SLOT THREE", line:"Your third link goes here", url:"#", cta:"Open", tint:"#4f9e46" }
+  { label:"ECONOMICS", title:"EcoWisdom by Dr Aditi P", line:"Economics made easy, explained in English and Marathi", url:"https://www.youtube.com/@EcoWisdombyDrAditi", cta:"Watch", tint:"#2f6fb0" },
+  { label:"MOCK TESTS", title:"Just Mock Tests", line:"Affordable, ad-free mock tests for NET and SET", url:"https://justmocktests.github.io/", cta:"Practise", tint:"#4f9e46" },
+  { label:"ऑडिओबुक्स", title:"रहस्य उलगडताना", line:"Marathi suspense and thriller tales, narrated by Radheya Supnekar", url:"https://www.youtube.com/@RahasyaUlgadtana", cta:"Listen", tint:"#b3241c" }
 ];
 
 /* ========================= end of config ========================= */
@@ -335,6 +355,9 @@ let runStart = 0;          /* when this run began */
 let runEnded = false;      /* so a run is only submitted once */
 let lastRun = null;
 let gloryTimer = 0;   /* seconds of celebration before the scoreboard */
+let promoIdx = 0;
+let stagesSincePromo = 0;
+const PROMO_EVERY = 3;   /* the strip changes every this many stages cleared */
 const modeBtns = [
   { mode:"mouse", label:"MOUSE",    x:352, y:412, w:170, h:36 },
   { mode:"keys",  label:"KEYBOARD", x:542, y:412, w:170, h:36 }
@@ -347,7 +370,6 @@ function toCanvas(cx, cy){
   const r = cv.getBoundingClientRect();
   return { x:(cx - r.left) * (W / r.width), y:(cy - r.top) * (H / r.height) };
 }
-cv.addEventListener("mousemove", e => { const p = toCanvas(e.clientX, e.clientY); mouse.x = p.x; mouse.y = p.y; });
 cv.addEventListener("mousemove", e => {
   if (TOUCH) return;
   const p = toCanvas(e.clientX, e.clientY);
@@ -616,6 +638,12 @@ function finishLevel(){
                next: levelIndex + 1 < LEVELS.length ? LEVELS[levelIndex + 1] : null,
                scoreAtStart: noteData ? noteData.scoreAtStart : 0 };
   sfx.win();
+  stagesSincePromo++;
+  if (stagesSincePromo >= PROMO_EVERY){
+    stagesSincePromo = 0;
+    promoIdx = (promoIdx + 1) % PROMOS.length;
+    paintStrip();
+  }
   state = levelIndex + 1 < LEVELS.length ? "note" : "win";
   if (state === "win") gloryTimer = 15 * 60;
 }
@@ -1722,12 +1750,12 @@ function drawHUD(){
   ctx.fillStyle = Math.floor(time/22)%2 ? "#e2483a" : "#5a1a14";
   ctx.fillText("1UP", 18, 22);
   ctx.fillStyle = "#f4f4e8"; ctx.font = "bold 19px 'Courier New', monospace";
-  ctx.fillText(pad(score,6), 18, 44);
+  ctx.fillText(String(score), 18, 44);
 
   ctx.textAlign = "center"; ctx.font = "bold 15px 'Courier New', monospace";
   ctx.fillStyle = "#c9a227"; ctx.fillText("HI-SCORE", W/2, 22);
   ctx.fillStyle = "#f4f4e8"; ctx.font = "bold 19px 'Courier New', monospace";
-  ctx.fillText(pad(Math.max(hiScore,score),6), W/2, 44);
+  ctx.fillText(String(Math.max(hiScore,score)), W/2, 44);
 
   ctx.textAlign = "right"; ctx.font = "bold 15px 'Courier New', monospace";
   ctx.fillStyle = "#c9a227"; ctx.fillText("ARROWS " + pad(arrows,3), W-18, 22);
@@ -1847,7 +1875,35 @@ function drawTitle(){
   ctx.fillStyle = "#9fe870"; ctx.font = "bold 21px 'Courier New', monospace";
   ctx.fillText("MISSION - DEFEND THE SWAMP", W/2, 128);
 
-  panel(318, 182, 608, 206, 0);
+  /* the archer stands on the left bank, loosing an arrow on a loop */
+  {
+    const sx = croc.x, sy = croc.y, se = croc.env, sc = croc.cool;
+    croc.x = 0; croc.y = 0; croc.env = "sky";
+    const cyc = time % 150;
+    croc.cool = cyc < COOL ? (COOL - cyc) : 0;
+    ctx.save();
+    ctx.translate(128, 452 + Math.sin(time * 0.045) * 4);
+    ctx.scale(2.15, 2.15);
+    drawCroc();
+    ctx.restore();
+    croc.x = sx; croc.y = sy; croc.env = se; croc.cool = sc;
+    /* the arrow he just sent */
+    if (cyc > COOL && cyc < 135){
+      const ax = 128 + 42 * 2.15 + (cyc - COOL) * 9.2;
+      const ay = 452 + Math.sin(time * 0.045) * 4 - 74 * SC * 2.15;
+      ctx.save(); ctx.translate(ax, ay); ctx.scale(1.6, 1.6);
+      ctx.strokeStyle = "#e8d9b0"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(12, 0); ctx.stroke();
+      ctx.fillStyle = "#d8dee3";
+      ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(10, -5); ctx.lineTo(10, 5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#c9382c";
+      ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(-18, -6); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(-18, 6); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  panel(318, 176, 608, 194, 0);
   ctx.fillStyle = "#e9f5ec"; ctx.font = "bold 15px 'Courier New', monospace"; ctx.textAlign = "left";
   const lines = TOUCH ? [
     "SLIDE THE PAD ON THE LEFT TO AIM.",
@@ -1877,7 +1933,7 @@ function drawTitle(){
     "ONE LIFE.  IF THEY REACH YOU, THE STAGE IS OVER.",
     "DO NOT RUN OUT OF ARROWS."
   ]);
-  lines.forEach((t,i) => ctx.fillText(t, 344, 210 + i * 23));
+  lines.forEach((t,i) => ctx.fillText(t, 344, 202 + i * 21));
 
   /* on a desktop the player picks how they want to play before anything starts */
   if (!TOUCH){
@@ -1896,11 +1952,15 @@ function drawTitle(){
   }
 
   ctx.textAlign = "center";
+  if (!TOUCH && inputMode){
+    ctx.fillStyle = "#9fe870"; ctx.font = "bold 14px 'Courier New', monospace";
+    ctx.fillText(inputMode === "keys" ? "PRESS SPACEBAR TO FIRE" : "LEFT CLICK TO FIRE", 622, 476);
+  }
   ctx.fillStyle = Math.floor(time/30)%2 ? "#ffd45e" : "#fff";
-  ctx.font = "bold 21px 'Courier New', monospace";
-  if (TOUCH || inputMode) ctx.fillText(TOUCH ? "TAP TO DEFEND THE SWAMP" : "PRESS FIRE TO DEFEND THE SWAMP", W/2, 478);
-  ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.font = "12px 'Courier New', monospace";
-  ctx.fillText("(C) 1987  ECOWISDOM KNOWLEDGE VENTURES   1 PLAYER ONLY", W/2, 556);
+  ctx.font = "bold 20px 'Courier New', monospace";
+  if (TOUCH || inputMode) ctx.fillText(TOUCH ? "TAP TO DEFEND THE SWAMP" : "PRESS FIRE TO DEFEND THE SWAMP", W/2, 504);
+  ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "12px 'Courier New', monospace";
+  ctx.fillText("A RETRO ARCADE TRIBUTE   1 PLAYER", W/2, 556);
 }
 
 function drawNote(){
@@ -2111,7 +2171,7 @@ function drawWin(){
   ctx.fillStyle = "#e9f5ec"; ctx.font = "bold 16px 'Courier New', monospace";
   ctx.fillText("FINAL SCORE", W/2, 180);
   ctx.fillStyle = "#ffd45e"; ctx.font = "bold 40px 'Courier New', monospace";
-  ctx.fillText(pad(score,6), W/2, 226);
+  ctx.fillText(String(score), W/2, 226);
 
   ctx.fillStyle = Math.floor(time/30)%2 ? "#ffd45e" : "#fff";
   ctx.font = "bold 18px 'Courier New', monospace";
@@ -2216,6 +2276,7 @@ const $ = id => document.getElementById(id);
   };
   pad.addEventListener("touchstart", e => {
     e.preventDefault();
+    pad.classList.add("used");
     const t = e.changedTouches[0]; id = t.identifier; setFromY(t.clientY);
   }, {passive:false});
   pad.addEventListener("touchmove", e => {
@@ -2236,7 +2297,7 @@ const $ = id => document.getElementById(id);
   if (!pad) return;
   const hit = e => {
     e.preventDefault();
-    pad.classList.add("hit");
+    pad.classList.add("hit","used");
     setTimeout(() => pad.classList.remove("hit"), 90);
     act();
   };
@@ -2360,12 +2421,12 @@ function showNameCard(outcome){
   setText("overSub", outcome === "CLEARED"
     ? "All ten stages held."
     : "You reached stage " + lastRun.stage + ", " + LEVELS[levelIndex].title);
-  setText("overScore", pad(lastRun.score, 6));
+  setText("overScore", String(lastRun.score));
   setText("saveNote", "");
   try {
     const inp = $("pname");
     if (inp){
-      try { inp.value = localStorage.getItem("crocName") || ""; } catch(e){ inp.value = ""; }
+      inp.value = "";   /* always blank, so one person's name is not reused */
       setTimeout(() => { try { inp.focus(); } catch(e){} }, 60);
     }
   } catch(e){}
@@ -2375,7 +2436,6 @@ function showNameCard(outcome){
 function submitRun(name){
   setText("saveNote", "Saving...");
   try { $("bSave").disabled = true; } catch(e){}
-  try { localStorage.setItem("crocName", name); } catch(e){}
   callApi({
     action: "submit",
     name: name,
@@ -2420,7 +2480,7 @@ function paintBoards(data, myName){
     return '<li class="' + (mine ? "me" : "") + '">' +
       '<span class="n">' + (i + 1) + '</span>' +
       '<span class="who">' + escapeHtml(r.name) + '</span>' +
-      '<span class="sc">' + pad(r.score, 6) + '</span></li>';
+      '<span class="sc">' + r.score + '</span></li>';
   };
   day.innerHTML = data.daily && data.daily.length ? data.daily.map(row).join("") : '<li class="loading">nobody yet today</li>';
   all.innerHTML = data.overall && data.overall.length ? data.overall.map(row).join("") : '<li class="loading">nobody yet</li>';
@@ -2459,17 +2519,99 @@ function promoBox(pr){
     '<span class="txt"><b>' + escapeHtml(pr.title) + '</b><i>' + escapeHtml(pr.line) + '</i></span>' +
     '<span class="go">' + escapeHtml(pr.cta) + '</span></a>';
 }
-(function(){
+function paintStrip(){
   if (!SHOW_PROMOS || !PROMOS.length) return;
   const strip = $("promoStrip");
-  if (strip) strip.innerHTML = promoBox(PROMOS[0]);
+  if (strip) strip.innerHTML = promoBox(PROMOS[promoIdx % PROMOS.length]);
+}
+(function(){
+  if (!SHOW_PROMOS || !PROMOS.length) return;
+  /* a random start so two people playing at once are not shown the same one,
+     which keeps all three fairly represented */
+  promoIdx = Math.floor(Math.random() * PROMOS.length);
+  paintStrip();
   const ov = $("promoOverlay");
   if (ov) ov.innerHTML = PROMOS.map(promoBox).join("");
-  /* the strip under the game rotates */
-  if (PROMOS.length > 1 && strip){
-    let i = 0;
-    setInterval(() => { i = (i + 1) % PROMOS.length; strip.innerHTML = promoBox(PROMOS[i]); }, 12000);
+})();
+
+/* ---------- the little attract demo for the portrait screen ---------- */
+(function(){
+  const dc = document.getElementById("demo");
+  if (!dc || !dc.getContext) return;
+  const g = dc.getContext("2d");
+  const DW = 480, DH = 300;
+  let t = 0;
+  /* a mix of enemies drifting past, and the archer firing on a loop */
+  const movers = [];
+  function seed(){
+    const kinds = ["balloon","shark","whale","ray","turtle"];
+    for (let i = 0; i < 7; i++){
+      movers.push({
+        k: kinds[i % kinds.length],
+        x: DW + i * 90 + Math.random() * 200,
+        y: 60 + Math.random() * 200,
+        s: 0.8 + Math.random() * 0.9,
+        sc: 0.5 + Math.random() * 0.3
+      });
+    }
   }
+  seed();
+  function frame(){
+    const rot = document.getElementById("rotate");
+    const showing = rot && rot.style && rot.style.display !== "none" && rot.offsetParent !== null;
+    if (!showing){ requestAnimationFrame(frame); return; }
+    t++;
+    /* water */
+    const grd = g.createLinearGradient(0, 0, 0, DH);
+    grd.addColorStop(0, "#0d4f6e"); grd.addColorStop(1, "#062f45");
+    g.fillStyle = grd; g.fillRect(0, 0, DW, DH);
+    g.fillStyle = "#c2a86a"; g.fillRect(0, DH - 16, DW, 16);
+
+    /* enemies */
+    for (const m of movers){
+      m.x -= m.s;
+      if (m.x < -40){ m.x = DW + 40 + Math.random() * 120; m.y = 60 + Math.random() * 200; }
+      g.save(); g.translate(m.x, m.y); g.scale(m.sc, m.sc);
+      if (m.k === "balloon"){
+        g.fillStyle = "#e2483a"; g.beginPath(); g.arc(0, 0, 22, 0, 6.29); g.fill();
+        g.strokeStyle = "rgba(255,255,255,.6)"; g.beginPath(); g.moveTo(0, 22); g.lineTo(0, 40); g.stroke();
+      } else if (m.k === "whale"){
+        g.fillStyle = "#5c7396"; g.beginPath(); g.ellipse(0, 0, 34, 18, 0, 0, 6.29); g.fill();
+        g.fillStyle = "#eef4fa"; g.beginPath(); g.ellipse(6, 5, 22, 8, 0, 0, 6.29); g.fill();
+      } else if (m.k === "shark"){
+        g.fillStyle = "#8794a2"; g.beginPath(); g.ellipse(0, 0, 26, 10, 0, 0, 6.29); g.fill();
+        g.beginPath(); g.moveTo(20, 0); g.lineTo(34, -8); g.lineTo(30, 0); g.closePath(); g.fill();
+      } else if (m.k === "ray"){
+        g.fillStyle = "#4a5f80"; g.beginPath(); g.ellipse(0, 0, 24, 12, 0, 0, 6.29); g.fill();
+      } else {
+        g.fillStyle = "rgba(210,240,255,.5)"; g.beginPath(); g.ellipse(0, 0, 18, 22, 0, 0, 6.29); g.fill();
+        g.fillStyle = "#4f9e46"; g.beginPath(); g.ellipse(0, 4, 11, 9, 0, 0, 6.29); g.fill();
+      }
+      g.restore();
+    }
+
+    /* the archer on the left, firing on a loop */
+    const cyc = t % 90;
+    g.save(); g.translate(40, DH - 70);
+    g.fillStyle = "#4f9e46";
+    g.beginPath(); g.ellipse(0, -18, 15, 20, 0, 0, 6.29); g.fill();
+    g.fillRect(-10, -4, 8, 22); g.fillRect(3, -4, 8, 22);
+    g.beginPath(); g.ellipse(6, -34, 11, 9, 0, 0, 6.29); g.fill();
+    g.fillRect(10, -38, 20, 7);
+    g.fillStyle = "#111"; g.beginPath(); g.arc(4, -36, 2, 0, 6.29); g.fill();
+    g.strokeStyle = "#c9a227"; g.lineWidth = 3;
+    g.beginPath(); g.arc(14, -20, 16, -1.2, 1.2); g.stroke();
+    g.restore();
+    if (cyc < 60){
+      const ax = 70 + cyc * 7;
+      g.strokeStyle = "#e8d9b0"; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(ax, DH - 90); g.lineTo(ax + 20, DH - 90); g.stroke();
+      g.fillStyle = "#d8dee3";
+      g.beginPath(); g.moveTo(ax + 28, DH - 90); g.lineTo(ax + 20, DH - 94); g.lineTo(ax + 20, DH - 86); g.closePath(); g.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 })();
 
 let last = performance.now();
