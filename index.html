@@ -127,8 +127,7 @@
 
   /* ---------- a phone held sideways ---------- */
   @media (orientation:landscape) and (max-height:600px){
-    #app{gap:2px;padding:2px 2px 0;justify-content:flex-start;height:100dvh;max-height:100dvh;overflow:hidden;}
-    /* a thinner bar frees more height, which makes the canvas taller AND wider */
+    #app{gap:2px;padding:2px;justify-content:center;height:100dvh;max-height:100dvh;overflow:hidden;}
     #bar{gap:4px;padding:0;flex-wrap:nowrap;justify-content:center;flex:0 0 auto;}
     #bar .brand{display:none;}
     .btn{padding:3px 7px;font-size:9px;letter-spacing:0;border-width:1px;}
@@ -137,20 +136,21 @@
     #tag{display:none;}
     #promoStrip{display:none;}
     #frame{border-width:2px;border-radius:5px;flex:0 0 auto;}
-    /* the stage spreads its children edge to edge: pads pinned to the screen sides,
-       labels tucked beside them, the canvas taking the middle */
     #stage{gap:2px;padding:0;align-items:center;width:100%;justify-content:space-between;flex:1 1 auto;min-height:0;overflow:hidden;}
-    #padL,#padR,.padLabel{align-self:center;height:calc(100dvh - 42px);max-height:100%;}
+    /* the canvas fits INSIDE both the leftover height and the leftover width, and
+       aspect-ratio keeps its 16:10 shape. because we constrain by max-* and let
+       width/height be auto, the WHOLE 960x600 is always visible - nothing clips. */
     canvas{
       display:block;
-      height:calc(100dvh - 42px);
-      max-height:100%;
       width:auto;
+      height:auto;
       aspect-ratio:960 / 600;
-      max-width:calc(100vw - 150px);   /* pads + labels are slimmer now, so more width for the game */
+      max-height:calc(100dvh - 46px);      /* the short screen minus the thin bar */
+      max-width:calc(100vw - 148px);       /* minus the two pads and two labels */
     }
-    #padL{width:44px;flex:0 0 44px;}
-    #padR{width:52px;flex:0 0 52px;}
+    #padL,#padR,.padLabel{align-self:center;}
+    #padL{width:44px;flex:0 0 44px;height:calc(100dvh - 46px);max-height:78vw;}
+    #padR{width:52px;flex:0 0 52px;height:calc(100dvh - 46px);max-height:78vw;}
     #padR .ring{width:44px;height:44px;font-size:9px;}
     #knob{width:38px;height:38px;border-radius:10px;}
     .padLabel{flex:0 0 24px;font-size:9px;gap:4px;}
@@ -223,8 +223,8 @@
     .pbBtn{padding:9px;font-size:12px;}
   }
   .promoBox{
-    display:flex;align-items:center;gap:10px;text-align:left;
-    border:2px solid #c9a227;border-radius:6px;padding:9px 12px;
+    display:flex;align-items:center;gap:8px;text-align:left;
+    border:2px solid #c9a227;border-radius:6px;padding:6px 10px;
     text-decoration:none;color:#dce8dd;background:rgba(8,22,16,.7);
   }
   .promoBox .tag{
@@ -232,8 +232,8 @@
     padding:4px 7px;border-radius:3px;color:#fff;white-space:nowrap;
   }
   .promoBox .txt{flex:1;min-width:0;}
-  .promoBox .txt b{display:block;font-family:"Courier New",monospace;font-size:12px;color:#ffd45e;font-weight:bold;line-height:1.3;}
-  .promoBox .txt i{font-style:normal;font-size:11px;color:#a9c4ae;}
+  .promoBox .txt b{display:block;font-family:"Courier New",monospace;font-size:11px;color:#ffd45e;font-weight:bold;line-height:1.25;}
+  .promoBox .txt i{font-style:normal;font-size:10px;color:#a9c4ae;}
   .promoBox .go{
     font-family:"Courier New",monospace;font-size:11px;padding:6px 11px;border-radius:3px;
     font-weight:bold;white-space:nowrap;
@@ -250,7 +250,7 @@
     100% {border-color:#c9a227;box-shadow:0 0 8px rgba(201,162,39,.5);}
   }
   .plogo{
-    width:38px;height:38px;flex:0 0 38px;border-radius:8px;
+    width:32px;height:32px;flex:0 0 32px;border-radius:7px;
     display:flex;align-items:center;justify-content:center;overflow:hidden;
     font-family:"Courier New",monospace;font-size:14px;color:#fff;font-weight:bold;
   }
@@ -334,7 +334,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;bottom:2px;right:4px;font:10px monospace;color:rgba(125,154,130,.5);z-index:60;pointer-events:none;">build 10</div>
+  <div id="buildTag" style="position:fixed;bottom:2px;right:4px;font:10px monospace;color:rgba(125,154,130,.5);z-index:60;pointer-events:none;">build 11</div>
 </div>
 
 <div id="over">
@@ -507,21 +507,23 @@ let intro = 0;
 /* a phone is a device whose primary pointer is coarse (a finger) AND whose screen
    is small. a touchscreen laptop has a fine pointer available, so it gets the
    normal mouse/keyboard desktop experience, not the on-screen pads. */
-function detectTouch(){
-  try {
-    const coarse = window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
-    const noHover = window.matchMedia && window.matchMedia("(hover:none)").matches;
-    const smallest = Math.min(window.innerWidth || 9999, window.innerHeight || 9999);
-    const hasTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
-    /* treat as phone only when it is genuinely a touch-first small screen */
-    return hasTouch && (coarse || noHover) && smallest <= 820;
-  } catch(e){
-    return ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
-  }
+/* We do NOT guess the device. Guessing wrongly showed the pads on plain laptops
+   that merely report a touch capability. Instead the game is desktop by default,
+   and flips to touch controls only when a real finger actually touches the screen.
+   A mouse user therefore never sees the on-screen pads. */
+let TOUCH = false;
+let inputMode = null;   /* null until the player picks, on desktop */
+
+function enableTouchMode(){
+  if (TOUCH) return;
+  TOUCH = true;
+  inputMode = "touch";
+  try { document.body.classList.add("touch"); } catch(e){}
+  try { updateCursor(); } catch(e){}
+  try { refreshCaption(); } catch(e){}
 }
-const TOUCH = detectTouch();
-try { if (TOUCH) document.body.classList.add("touch"); } catch(e){}
-let inputMode = TOUCH ? "touch" : null;   /* null until the player picks on desktop */
+/* the first genuine touch anywhere switches the whole game into phone mode */
+window.addEventListener("touchstart", enableTouchMode, { once:true, passive:true, capture:true });
 let aimY = 300;                            /* the height the archer is heading for */
 let keyTarget = 300;
 let runStart = 0;          /* when this run began */
@@ -2669,14 +2671,14 @@ if ($("bSound")) $("bSound").addEventListener("click", () => {
 });
 
 /* the caption */
-(function(){
+function refreshCaption(){
   const el = $("tag");
   if (!el) return;
   el.innerHTML = TOUCH
-    ? 'Slide the pad on the left to aim <b>&middot;</b> Tap FIRE to shoot'
+    ? 'Slide the left edge to aim <b>&middot;</b> Tap FIRE, or tap the water, to shoot'
     : 'Choose mouse or keyboard on the title screen <b>&middot;</b> P pause <b>&middot;</b> R restart stage';
-  document.body.classList.toggle("touch", TOUCH);
-})();
+}
+refreshCaption();
 
 /* the cursor only disappears while you are actually playing with the mouse,
    so the title screen and its buttons are always usable */
