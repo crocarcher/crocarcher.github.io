@@ -63,8 +63,19 @@
   canvas{cursor:default;}
   body.playingMouse canvas{cursor:none;}
 
-  #padL,#padR{display:none;}
-  body.touch #padL,body.touch #padR{display:flex;}
+  #padL,#padR,.padLabel{display:none;}
+  body.touch #padL,body.touch #padR,body.touch .padLabel{display:flex;}
+  .padLabel{
+    flex-direction:column;align-items:center;justify-content:center;
+    flex:0 0 16px;gap:0;padding:0;
+    font-family:"Courier New",monospace;font-size:10px;color:#9fe870;
+    line-height:1.05;letter-spacing:0;
+    animation:pulse 1.3s ease-in-out infinite;pointer-events:none;
+  }
+  .padLabel span{display:block;}
+  .padLabel .gap{height:5px;}
+  .padLabel .arrow{color:#ffd45e;font-size:12px;margin-top:4px;}
+  .padLabel .arrow.left{margin-top:0;margin-bottom:4px;}
 
   #padL{
     width:78px;flex:0 0 78px;
@@ -192,7 +203,7 @@
     padding:4px 7px;border-radius:3px;color:#fff;white-space:nowrap;
   }
   .promoBox .txt{flex:1;min-width:0;}
-  .promoBox .txt b{display:block;font-family:"Courier New",monospace;font-size:13px;color:#ffd45e;font-weight:normal;}
+  .promoBox .txt b{display:block;font-family:"Courier New",monospace;font-size:12px;color:#ffd45e;font-weight:bold;line-height:1.3;}
   .promoBox .txt i{font-style:normal;font-size:11px;color:#a9c4ae;}
   .promoBox .go{
     font-family:"Courier New",monospace;font-size:11px;padding:6px 11px;border-radius:3px;
@@ -226,8 +237,11 @@
     letter-spacing:2px;padding:3px 6px;border-radius:3px;color:#fff;
   }
   .pbTitle b{font-family:"Courier New",monospace;font-size:15px;color:#ffd45e;font-weight:normal;}
+  .pbFixed{
+    font-size:12px;color:#ffe9a8;margin:9px 0 4px;line-height:1.45;font-weight:bold;
+  }
   .pbIntro{
-    font-size:12px;color:#cfe0d3;margin:10px 0;min-height:34px;line-height:1.4;
+    font-size:12px;color:#cfe0d3;margin:4px 0 10px;min-height:34px;line-height:1.4;
     transition:opacity .25s;
   }
   .pbBtn{
@@ -279,7 +293,8 @@
   </div>
 
   <div id="stage">
-    <div id="padL"><span class="hint">MOVE THIS UP AND DOWN FOR MOVEMENT</span><div id="knob"></div></div>
+    <div id="labL" class="padLabel"><span>M</span><span>O</span><span>V</span><span>E</span><span class="gap"></span><span>U</span><span>P</span><span class="gap"></span><span>&amp;</span><span class="gap"></span><span>D</span><span>O</span><span>W</span><span>N</span><span class="arrow">&#9654;</span></div>
+    <div id="padL"><div id="knob"></div></div>
     <div id="frame"><canvas id="game" width="960" height="600"></canvas></div>
     <div id="padR">
     <div class="fireHint" id="fireHint"><span>TAP TO FIRE</span>👇</div>
@@ -350,6 +365,7 @@ const PROMOS = [
   {
     label: "ECONOMICS",
     title: "Eco Wisdom by Dr Aditi P",
+    head:  "Eco Wisdom by Dr Aditi P - Economics made Easy and Explained in Marathi",
     line:  "Economics made easy, explained in English and Marathi",
     url:   "https://www.youtube.com/@EcoWisdombyDrAditi",
     cta:   "Visit Channel",
@@ -366,6 +382,7 @@ const PROMOS = [
   {
     label: "MOCK TESTS",
     title: "Just Mock Tests",
+    head:  "Just Mock Tests - Affordable MCQ Mock Tests for Competitive Exams ( SET / NET / and others )",
     line:  "Affordable, ad-free mock tests for NET and SET",
     url:   "https://justmocktests.github.io/",
     cta:   "Visit Portal",
@@ -382,6 +399,7 @@ const PROMOS = [
   {
     label: "ऑडिओबुक्स",
     title: "रहस्य उलगडताना",
+    head:  "रहस्य उलगडताना - Marathi Audio Books - तुम्ही कधीही न ऐकलेल्या अद्भुत रहस्यकथा. फक्त व्हिडिओ ऑन (ON) करा आणि कथा ऐका - No Tension !!!",
     line:  "Marathi suspense and thriller tales, narrated by Radheya Supnekar",
     url:   "https://www.youtube.com/@RahasyaUlgadtana",
     cta:   "Visit Channel",
@@ -2122,11 +2140,11 @@ function drawLoading(){
     ctx.textAlign = "left";
     ctx.fillStyle = pr.tint; ctx.font = "bold 10px 'Courier New', monospace";
     ctx.fillText(pr.label, cx + 20, cy + 20);
-    ctx.fillStyle = "#ffd45e"; ctx.font = "bold 17px 'Courier New', monospace";
-    ctx.fillText(pr.title, cx + 20, cy + 40);
-    ctx.fillStyle = "#a9c4ae"; ctx.font = "12px 'Courier New', monospace";
-    const line = pr.line.length > 50 ? pr.line.slice(0, 48) + "..." : pr.line;
-    ctx.fillText(line, cx + 20, cy + 56);
+    ctx.fillStyle = "#ffd45e"; ctx.font = "bold 15px 'Courier New', monospace";
+    ctx.fillText(pr.title, cx + 20, cy + 38);
+    ctx.fillStyle = "#a9c4ae"; ctx.font = "11px 'Courier New', monospace";
+    const line = pr.line.length > 54 ? pr.line.slice(0, 52) + "..." : pr.line;
+    ctx.fillText(line, cx + 20, cy + 55);
     ctx.textAlign = "right";
     ctx.fillStyle = "rgba(233,245,236,0.6)"; ctx.font = "bold 11px 'Courier New', monospace";
     ctx.fillText("LINK BELOW THE GAME", cx + cw - 18, cy + 38);
@@ -2702,7 +2720,7 @@ function promoBox(pr, lineIdx){
     : pr.line;
   return '<a class="promoBox" href="' + pr.url + '" target="_blank" rel="noopener">' +
     promoLogo(pr) +
-    '<span class="txt"><b>' + escapeHtml(pr.title) + '</b><i>' + escapeHtml(desc) + '</i></span>' +
+    '<span class="txt"><b>' + escapeHtml(pr.head || pr.title) + '</b><i>' + escapeHtml(desc) + '</i></span>' +
     '<span class="go">' + escapeHtml(pr.cta) + '</span></a>';
 }
 
@@ -2713,8 +2731,9 @@ function promoCardBig(pr, i){
     '<div class="pbHead">' + promoLogo(pr) +
       '<div class="pbTitle"><span class="tag" style="background:' + pr.tint + '">' + escapeHtml(pr.label) + '</span>' +
       '<b>' + escapeHtml(pr.title) + '</b></div></div>' +
+    (pr.head ? '<div class="pbFixed">' + escapeHtml(pr.head) + '</div>' : '') +
     '<div class="pbIntro" id="' + introId + '">' + escapeHtml((pr.intro && pr.intro[0]) || pr.line) + '</div>' +
-    '<a class="pbBtn" href="' + pr.url + '" target="_blank" rel="noopener" style="background:' + pr.tint + '">' +
+    '<a class="pbBtn" href="' + pr.url + '" target="_blank" rel="noopener">' +
       escapeHtml(pr.cta) + '</a>' +
     '</div>';
 }
@@ -2757,8 +2776,15 @@ setInterval(() => {
   paintStrip();
   const ov = $("promoOverlay");
   if (ov){ ov.innerHTML = PROMOS.map(promoCardBig).join(""); startIntroRotation(); }
-  /* the strip changes only when a stage is cleared, so each ad holds for a
-     whole level before the next appears */
+  /* on the title screen an ad holds for 20 seconds then changes. once a game is
+     running the per-stage advance takes over, so each ad holds for a whole level. */
+  setInterval(() => {
+    if (state === "title"){
+      promoIdx = (promoIdx + 1) % PROMOS.length;
+      stripLine = 0;
+      paintStrip();
+    }
+  }, 20000);
 })();
 
 /* ---------- the portrait attract demo: a tall swamp with everything swimming past ---------- */
@@ -2766,7 +2792,16 @@ setInterval(() => {
   const dc = document.getElementById("demo");
   if (!dc || !dc.getContext) return;
   const g = dc.getContext("2d");
-  const DW = 420, DH = 740;
+  let DW = 420, DH = 740;
+  function fit(){
+    /* size the canvas to the actual portrait screen so the swamp fills it */
+    const w = Math.max(300, window.innerWidth || 420);
+    const h = Math.max(500, window.innerHeight || 740);
+    DW = w; DH = h;
+    dc.width = w; dc.height = h;
+  }
+  fit();
+  window.addEventListener("resize", fit);
   let t = 0;
   const kinds = ["shark","whale","sub","ray","bomber","hammer","turtle","balloon"];
   const movers = [];
@@ -2824,7 +2859,7 @@ setInterval(() => {
 
   function frame(){
     const rot = document.getElementById("rotate");
-    const showing = rot && rot.style && rot.style.display !== "none" && rot.offsetParent !== null;
+    const showing = rot && rot.offsetParent !== null;   /* visible via the CSS media query */
     if (!showing){ requestAnimationFrame(frame); return; }
     t++;
 
