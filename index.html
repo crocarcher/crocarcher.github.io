@@ -53,17 +53,12 @@
 
   /* ---------- the playfield and the two touch pads beside it ---------- */
   #stage{display:flex;align-items:stretch;gap:8px;width:100%;justify-content:center;min-height:0;}
-  body.touch #stage{gap:0;justify-content:space-between;width:100%;}
   #frame{
     position:relative;border:6px solid #6b4a1f;border-radius:10px;
     box-shadow:0 0 0 3px #2b1c0a,0 18px 50px rgba(0,0,0,.75),inset 0 0 0 2px #a5772f;
     overflow:hidden;background:#000;flex:0 1 auto;min-width:0;
   }
-  canvas{display:block;width:100%;height:auto;max-height:100%;touch-action:none;}
-  /* on a phone the canvas is driven by height so it fits the short landscape screen,
-     and the frame hugs it instead of stretching the flex row */
-  body.touch #frame{flex:1 1 auto;display:flex;min-width:0;min-height:0;align-items:center;justify-content:center;}
-  body.touch canvas{width:100%;height:100%;object-fit:contain;}
+  canvas{display:block;width:100%;height:auto;touch-action:none;}
   canvas{cursor:default;}
   body.playingMouse canvas{cursor:none;}
 
@@ -132,28 +127,32 @@
 
   /* ---------- a phone held sideways ---------- */
   @media (orientation:landscape) and (max-height:600px){
-    /* app stays a vertical column: a thin control bar on top, then the game row.
-       everything is kept short so the canvas gets almost the whole height. */
-    #app{gap:2px;padding:2px;justify-content:flex-start;height:100dvh;}
-    #bar{gap:3px;padding:0;flex:0 0 auto;flex-wrap:nowrap;overflow-x:auto;max-width:100%;}
+    #app{gap:3px;padding:3px;justify-content:flex-start;}
+    #bar{gap:4px;padding:0;flex-wrap:nowrap;justify-content:center;}
     #bar .brand{display:none;}
-    .btn{
-      padding:4px 8px;font-size:10px;letter-spacing:0;border-width:1px;
-      min-height:0;line-height:1.1;
-    }
+    .btn{padding:5px 9px;font-size:10px;letter-spacing:0;border-width:1px;}
     .btn .bl{font-size:10px;}
     #bSound svg{width:12px;height:12px;}
     #tag{display:none;}
     #promoStrip{display:none;}
     #frame{border-width:2px;border-radius:5px;}
-    #stage{gap:2px;padding:0;flex:1 1 auto;min-height:0;height:100%;align-items:stretch;width:100%;justify-content:center;}
-    body.touch #frame{height:auto;max-height:100%;}
-    body.touch canvas{width:100%;height:100%;object-fit:contain;}
-    #padL{width:50px;flex:0 0 50px;}
-    #padR{width:62px;flex:0 0 62px;}
-    #padR .ring{width:50px;height:50px;font-size:10px;}
+    #stage{gap:3px;padding:0;align-items:center;width:100%;justify-content:center;}
+    /* the canvas keeps its 16:10 shape, sized by height, capped so it never
+       overflows the row width. width follows from aspect-ratio, so it can never
+       collapse to zero. */
+    #frame{flex:0 0 auto;}
+    canvas{
+      display:block;
+      height:calc(100dvh - 52px);
+      width:auto;
+      aspect-ratio:960 / 600;
+      max-width:calc(100vw - 188px);   /* leaves room for both pads and both labels */
+    }
+    #padL{width:48px;flex:0 0 48px;}
+    #padR{width:60px;flex:0 0 60px;}
+    #padR .ring{width:48px;height:48px;font-size:10px;}
     #knob{width:40px;height:40px;border-radius:10px;}
-    .padLabel{flex:0 0 30px;font-size:10px;gap:5px;}
+    .padLabel{flex:0 0 28px;font-size:10px;gap:5px;}
     .padLabel .arrow{font-size:12px;}
   }
   @media (orientation:portrait){
@@ -331,7 +330,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;bottom:2px;right:4px;font:10px monospace;color:rgba(125,154,130,.5);z-index:60;pointer-events:none;">build 7</div>
+  <div id="buildTag" style="position:fixed;bottom:2px;right:4px;font:10px monospace;color:rgba(125,154,130,.5);z-index:60;pointer-events:none;">build 8</div>
 </div>
 
 <div id="over">
