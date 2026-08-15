@@ -67,15 +67,14 @@
   body.touch #padL,body.touch #padR,body.touch .padLabel{display:flex;}
   .padLabel{
     flex-direction:column;align-items:center;justify-content:center;
-    flex:0 0 16px;gap:0;padding:0;
-    font-family:"Courier New",monospace;font-size:10px;color:#9fe870;
-    line-height:1.05;letter-spacing:0;
+    flex:0 0 34px;gap:6px;padding:0 2px;
+    font-family:"Courier New",monospace;font-size:11px;color:#9fe870;
+    line-height:1;letter-spacing:0;text-align:center;
     animation:pulse 1.3s ease-in-out infinite;pointer-events:none;
   }
-  .padLabel span{display:block;}
-  .padLabel .gap{height:5px;}
-  .padLabel .arrow{color:#ffd45e;font-size:12px;margin-top:4px;}
-  .padLabel .arrow.left{margin-top:0;margin-bottom:4px;}
+  .padLabel .w{display:block;font-weight:bold;}
+  .padLabel .arrow{color:#ffd45e;font-size:14px;}
+  .padLabel .arrow.left{}
 
   #padL{
     width:78px;flex:0 0 78px;
@@ -129,23 +128,31 @@
 
   /* ---------- a phone held sideways ---------- */
   @media (orientation:landscape) and (max-height:600px){
-    #app{gap:2px;padding:2px 0;justify-content:flex-start;}
-    #bar{gap:4px;padding:0 2px;}
+    /* the whole app becomes a single horizontal row: buttons | slider | label | GAME | label | fire */
+    #app{gap:0;padding:0;justify-content:center;flex-direction:row;align-items:stretch;height:100dvh;}
+    #bar{
+      flex-direction:column;justify-content:center;gap:4px;
+      width:44px;flex:0 0 44px;padding:2px;
+    }
     #bar .brand{display:none;}
-    .btn{padding:3px 6px;font-size:9px;letter-spacing:0;border-width:1px;}
-    .btn svg{width:10px;height:10px;}
+    .btn{
+      padding:2px;width:40px;height:40px;letter-spacing:0;border-width:1px;
+      flex-direction:column;gap:1px;overflow:hidden;line-height:1;
+    }
+    .btn .bl{font-size:8px;text-align:center;word-break:break-word;}
+    #bSound .bl{display:none;}
+    #bSound svg{width:18px;height:18px;}
     #tag{display:none;}
     #promoStrip{display:none;}     /* the strip is hidden while playing on a phone, ads still show between stages */
     #frame{border-width:2px;border-radius:5px;}
-    #stage{gap:0;padding:0 2px;}
-    canvas{max-height:calc(100dvh - 44px);width:auto;}
-    #padL{width:62px;flex:0 0 62px;}
-    #padR{width:74px;flex:0 0 74px;}
-    #padR .ring{width:60px;height:60px;font-size:10px;}
-    #knob{width:46px;height:46px;border-radius:10px;}
-    #padL .hint{font-size:9px;}
-    .fireHint{font-size:8px;}
-    .fireHint span{font-size:7px;}
+    #stage{gap:0;padding:0;flex:1;min-width:0;align-items:center;}
+    canvas{max-height:100dvh;width:auto;max-width:100%;}
+    #padL{width:52px;flex:0 0 52px;}
+    #padR{width:64px;flex:0 0 64px;}
+    #padR .ring{width:52px;height:52px;font-size:10px;}
+    #knob{width:42px;height:42px;border-radius:10px;}
+    .padLabel{flex:0 0 26px;font-size:10px;gap:4px;}
+    .padLabel .arrow{font-size:12px;}
   }
   @media (orientation:portrait){
     body.touch #rotate{display:flex;}
@@ -156,6 +163,10 @@
     align-items:center;justify-content:center;padding:16px;overflow:auto;
   }
   #over.show{display:flex;}
+  @media (orientation:landscape) and (max-height:600px){
+    #nameCard .scoreBig{font-size:28px;margin:4px 0;}
+    #nameCard .lbl{margin:8px 0 4px;}
+  }
   #over .card{
     display:none;width:100%;max-width:560px;
     background:#0b1a12;border:3px solid #6b4a1f;border-radius:10px;
@@ -193,6 +204,22 @@
   #over ol li.me{background:rgba(201,162,39,.14);}
   #over ol li.loading{color:#5e7a63;justify-content:center;}
   #over .promoWrap{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+  #boardActions{position:sticky;top:0;z-index:3;background:#0b1a12;padding:8px 0;}
+  .btn.primary{border-color:#c9a227;color:#ffd45e;}
+  @media (orientation:landscape) and (max-height:600px){
+    #over{padding:6px;align-items:stretch;}
+    #over .card{max-width:100%;max-height:100dvh;overflow-y:auto;padding:10px;}
+    #over .ttl{font-size:18px;}
+    #over .boards{gap:8px;margin-top:6px;}
+    #over .bcol{min-width:120px;}
+    #over ol li{font-size:10px;padding:2px 0;}
+    #boardActions{padding:6px 0;gap:6px;}
+    #over .row .btn{flex:1;padding:10px;font-size:12px;}
+    .promoBig{padding:8px;}
+    .pbFixed{font-size:10px;}
+    .pbIntro{font-size:10px;min-height:26px;}
+    .pbBtn{padding:9px;font-size:12px;}
+  }
   .promoBox{
     display:flex;align-items:center;gap:10px;text-align:left;
     border:2px solid #c9a227;border-radius:6px;padding:9px 12px;
@@ -283,23 +310,21 @@
 
   <div id="bar">
     <span class="brand">CROC ARCHER</span>
-    <button class="btn" id="bNew" title="Start again from stage one">NEW GAME</button>
-    <button class="btn" id="bPause" title="Pause">PAUSE</button>
-    <button class="btn" id="bAbort" title="Give up this run">ABORT</button>
+    <button class="btn" id="bNew" title="Start again from stage one"><span class="bl">NEW GAME</span></button>
+    <button class="btn" id="bPause" title="Pause"><span class="bl">PAUSE</span></button>
+    <button class="btn" id="bAbort" title="Give up this run"><span class="bl">ABORT</span></button>
     <button class="btn on" id="bSound" title="Game sound">
       <svg id="sndIcon" viewBox="0 0 24 24"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>
-      <span id="sndLabel">SOUND ON</span>
+      <span id="sndLabel" class="bl">SOUND ON</span>
     </button>
   </div>
 
   <div id="stage">
-    <div id="labL" class="padLabel"><span>M</span><span>O</span><span>V</span><span>E</span><span class="gap"></span><span>U</span><span>P</span><span class="gap"></span><span>&amp;</span><span class="gap"></span><span>D</span><span>O</span><span>W</span><span>N</span><span class="arrow">&#9654;</span></div>
     <div id="padL"><div id="knob"></div></div>
+    <div id="labL" class="padLabel"><span class="arrow left">&#9664;</span><span class="w">MOVE</span><span class="w">THIS</span><span class="w">TO</span><span class="w">AIM</span></div>
     <div id="frame"><canvas id="game" width="960" height="600"></canvas></div>
-    <div id="padR">
-    <div class="fireHint" id="fireHint"><span>TAP TO FIRE</span>👇</div>
-    <div class="ring">FIRE</div>
-  </div>
+    <div id="labR" class="padLabel"><span class="w">PRESS</span><span class="w">TO</span><span class="w">FIRE</span><span class="arrow">&#9654;</span></div>
+    <div id="padR"><div class="ring">FIRE</div></div>
   </div>
 
   <div id="promoStrip"></div>
@@ -333,11 +358,11 @@
         <ol id="allList"><li class="loading">loading</li></ol>
       </div>
     </div>
-    <div class="promoWrap" id="promoOverlay"></div>
-    <div class="row">
-      <button class="btn" id="bPlayAgain">PLAY AGAIN</button>
+    <div class="row" id="boardActions">
+      <button class="btn primary" id="bPlayAgain">PLAY AGAIN</button>
       <button class="btn" id="bQuit">QUIT TO TITLE</button>
     </div>
+    <div class="promoWrap" id="promoOverlay"></div>
   </div>
 </div>
 
@@ -474,6 +499,7 @@ const SIZE = { chickenBalloon:0.74, eggBalloon:0.74, bag:0.50, shark:0.74,
                whale:0.66, sub:0.70, bomber:0.70, hammer:0.74, ray:0.76, board:1 };
 let intro = 0;
 const TOUCH = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+try { if (TOUCH) document.body.classList.add("touch"); } catch(e){}
 let inputMode = TOUCH ? "touch" : null;   /* null until the player picks on desktop */
 let aimY = 300;                            /* the height the archer is heading for */
 let keyTarget = 300;
@@ -2500,7 +2526,7 @@ function syncBar(){
   updateCursor();
   const p = $("bPause"), a = $("bAbort");
   if (p){
-    p.textContent = paused ? "RESUME" : "PAUSE";
+    const pl = p.querySelector(".bl"); if (pl) pl.textContent = paused ? "RESUME" : "PAUSE";
     p.disabled = state !== "play";
     p.classList.toggle("on", paused);
   }
@@ -2802,6 +2828,8 @@ setInterval(() => {
   }
   fit();
   window.addEventListener("resize", fit);
+  window.addEventListener("orientationchange", () => setTimeout(fit, 120));
+  setTimeout(fit, 300);
   let t = 0;
   const kinds = ["shark","whale","sub","ray","bomber","hammer","turtle","balloon"];
   const movers = [];
@@ -2857,9 +2885,9 @@ setInterval(() => {
     g.restore();
   }
 
+  const portraitMQ = window.matchMedia ? window.matchMedia("(orientation:portrait)") : null;
   function frame(){
-    const rot = document.getElementById("rotate");
-    const showing = rot && rot.offsetParent !== null;   /* visible via the CSS media query */
+    const showing = TOUCH && (portraitMQ ? portraitMQ.matches : (window.innerHeight > window.innerWidth));
     if (!showing){ requestAnimationFrame(frame); return; }
     t++;
 
