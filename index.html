@@ -214,8 +214,9 @@
     .padLabel{flex:0 0 24px;font-size:9px;gap:4px;}
     .padLabel .arrow{font-size:11px;}
   }
-  @media (orientation:portrait){
-    body.touch #rotate{display:flex;}
+  @media (orientation:portrait) and (pointer:coarse){
+    #rotate{display:flex !important;}
+    #app{display:none !important;}   /* hide the desktop-style game entirely in portrait */
   }
   #over{
     display:none;position:fixed;inset:0;z-index:40;
@@ -359,22 +360,53 @@
   #rotate{
     display:none;position:fixed;inset:0;z-index:50;
     background:#0b1a12;flex-direction:column;
-    align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;
+    align-items:center;justify-content:center;gap:12px;text-align:center;padding:14px;
   }
-  #rotate .big{font-family:"Courier New",monospace;color:#c9a227;font-size:20px;letter-spacing:2px;}
-  #rotate .sub{color:#7d9a82;font-size:13px;}
-  #rotate{padding:0;}
-  #demo{position:absolute;inset:0;width:100%;height:100%;display:block;}
-  #rotate .msg{
-    position:relative;z-index:2;text-align:center;padding:20px;
-    background:rgba(4,12,8,.35);border-radius:12px;
+  /* the stacked portrait content: game rectangle, ad, New Game */
+  #rotInner{
+    display:flex;flex-direction:column;align-items:stretch;gap:10px;
+    width:100%;max-width:520px;
   }
-  #rotate .big{
+  #demo{
+    display:block;width:100%;height:auto;aspect-ratio:16 / 10;
+    border:3px solid #6b4a1f;border-radius:8px;background:#0a3d5c;
+  }
+  /* the ad under the rectangle, same flashing style */
+  #rotAd{
+    display:flex;align-items:center;gap:8px;text-decoration:none;
+    border:2px solid #c9a227;border-radius:6px;background:rgba(8,22,16,.8);
+    padding:6px 10px;animation:slotGlow 10s ease-in-out infinite;
+  }
+  #rotAd .pa-logo{width:30px;height:30px;flex:0 0 30px;border-radius:5px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    font-family:"Courier New",monospace;font-size:12px;color:#fff;font-weight:bold;}
+  #rotAd .pa-logo img{width:100%;height:100%;object-fit:cover;}
+  #rotAd .pa-txt{flex:1;min-width:0;font-family:"Courier New",monospace;
+    font-size:11px;color:#ffd45e;font-weight:bold;line-height:1.3;text-align:left;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  #rotAd .pa-go{flex:0 0 auto;font-family:"Courier New",monospace;font-size:11px;
+    padding:6px 11px;border-radius:3px;font-weight:bold;white-space:nowrap;
+    animation:btnFlash 2s steps(1) infinite;}
+  /* the only button in portrait: New Game */
+  #rotNew{
+    font-family:"Courier New",monospace;font-size:16px;letter-spacing:2px;font-weight:bold;
+    padding:14px;border-radius:8px;cursor:pointer;
+    background:rgba(201,162,39,.9);border:2px solid #ffd45e;color:#0b1a12;
+  }
+  #rotNew:active{transform:scale(.98);}
+  /* the "hold horizontally" message, hidden until the player taps */
+  #rotMsg{
+    display:none;position:fixed;inset:0;z-index:51;
+    flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(4,12,8,.94);text-align:center;padding:24px;gap:8px;
+  }
+  #rotMsg.show{display:flex;}
+  #rotMsg .big{
     font-family:"Courier New",monospace;font-size:26px;letter-spacing:2px;font-weight:bold;
     animation:rotmsg 1.2s steps(1) infinite;text-shadow:0 2px 8px rgba(0,0,0,.9);
   }
   @keyframes rotmsg{0%{color:#e2483a;}50%{color:#ffd45e;}100%{color:#e2483a;}}
-  #rotate .sub{color:#fff;font-size:14px;margin-top:8px;text-shadow:0 2px 6px rgba(0,0,0,.9);}
+  #rotMsg .sub{color:#fff;font-size:14px;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -403,7 +435,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b18</div>
+  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b19</div>
 </div>
 
 <div id="phoneMenu">
@@ -452,10 +484,14 @@
 </div>
 
 <div id="rotate">
-  <canvas id="demo" width="420" height="740"></canvas>
-  <div class="msg">
-    <div class="big">TURN YOUR PHONE SIDEWAYS</div>
-    <div class="sub">Croc Archer is played in landscape</div>
+  <div id="rotInner">
+    <canvas id="demo" width="420" height="300"></canvas>
+    <a id="rotAd" target="_blank" rel="noopener"></a>
+    <button id="rotNew">NEW GAME</button>
+  </div>
+  <div id="rotMsg" class="msg">
+    <div class="big">HOLD YOUR PHONE HORIZONTALLY</div>
+    <div class="sub">Croc Archer is played sideways</div>
   </div>
 </div>
 
@@ -2820,20 +2856,40 @@ if ($("pmAbort")) $("pmAbort").addEventListener("click", () => {
 });
 
 /* ---------- phone: the thin rotating ad across the top ---------- */
-function paintPhoneAd(){
-  const el = $("phoneAd");
-  if (!el || !SHOW_PROMOS || !PROMOS.length) return;
-  const pr = PROMOS[promoIdx % PROMOS.length];
+function adInnerHTML(pr){
   const initials = (pr.title || "?").replace(/[^A-Za-z\u0900-\u097F]/g, "").slice(0, 2).toUpperCase();
-  el.href = pr.url;
-  el.target = "_blank"; el.rel = "noopener";
-  el.innerHTML =
-    '<span class="pa-logo" style="background:' + pr.tint + '">' +
+  return '<span class="pa-logo" style="background:' + pr.tint + '">' +
       (pr.img ? '<img src="' + pr.img + '" alt="" onerror="this.style.display=\'none\';this.parentNode.textContent=\'' + initials + '\'">' : initials) +
     '</span>' +
     '<span class="pa-txt">' + escapeHtml(pr.head || pr.title) + '</span>' +
     '<span class="pa-go">' + escapeHtml(pr.cta) + '</span>';
 }
+function paintPhoneAd(){
+  if (!SHOW_PROMOS || !PROMOS.length) return;
+  const pr = PROMOS[promoIdx % PROMOS.length];
+  ["phoneAd","rotAd"].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.href = pr.url; el.target = "_blank"; el.rel = "noopener";
+    el.innerHTML = adInnerHTML(pr);
+  });
+}
+
+/* ---------- portrait screen: New Game button and tap-to-remind ---------- */
+if ($("rotNew")) $("rotNew").addEventListener("click", e => {
+  e.preventDefault(); e.stopPropagation();
+  const msg = $("rotMsg"); if (msg) msg.classList.add("show");
+});
+/* a tap anywhere on the portrait screen also shows the reminder */
+if ($("rotate")) $("rotate").addEventListener("click", () => {
+  const msg = $("rotMsg"); if (msg) msg.classList.add("show");
+});
+/* tapping the reminder dismisses it */
+if ($("rotMsg")) $("rotMsg").addEventListener("click", () => {
+  const msg = $("rotMsg"); if (msg) msg.classList.remove("show");
+});
+/* the ad link opens normally and does not trigger the reminder */
+if ($("rotAd")) $("rotAd").addEventListener("click", e => { e.stopPropagation(); });
 
 /* the caption */
 function refreshCaption(){
@@ -3106,21 +3162,25 @@ setInterval(() => {
   const dc = document.getElementById("demo");
   if (!dc || !dc.getContext) return;
   const g = dc.getContext("2d");
-  let DW = 420, DH = 740;
+  let DW = 480, DH = 300;
   function fit(){
-    const w = Math.max(300, window.innerWidth || 420);
-    const h = Math.max(500, window.innerHeight || 740);
+    /* match the canvas backing store to its displayed 16:10 rectangle */
+    const r = dc.getBoundingClientRect();
+    const w = Math.max(240, Math.round(r.width) || 480);
+    const h = Math.max(150, Math.round(r.height) || Math.round(w * 10 / 16));
     DW = w; DH = h; dc.width = w; dc.height = h;
   }
   fit();
   window.addEventListener("resize", fit);
   window.addEventListener("orientationchange", () => setTimeout(fit, 120));
-  setTimeout(fit, 300);
+  [200, 500, 1000].forEach(ms => setTimeout(fit, ms));
 
   const portraitMQ = window.matchMedia ? window.matchMedia("(orientation:portrait)") : null;
   let t = 0;
   function frame(){
-    const showing = TOUCH && (portraitMQ ? portraitMQ.matches : (window.innerHeight > window.innerWidth));
+    const hasTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+    const isPortrait = portraitMQ ? portraitMQ.matches : (window.innerHeight > window.innerWidth);
+    const showing = hasTouch && isPortrait;
     if (!showing){ requestAnimationFrame(frame); return; }
     t++;
 
