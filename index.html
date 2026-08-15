@@ -130,7 +130,7 @@
   #tag b{color:#c9a227;}
 
   /* ---------- a phone held sideways ---------- */
-  @media (orientation:landscape) and (max-height:600px){
+  @media (orientation:landscape) and (max-height:700px){
     #app{gap:2px;padding:2px;justify-content:center;height:100dvh;max-height:100dvh;overflow:hidden;}
     #bar{gap:3px;padding:0;flex-wrap:nowrap;justify-content:center;flex:0 0 auto;}
     #bar .brand{display:none;}
@@ -168,50 +168,54 @@
     align-items:center;justify-content:center;padding:16px;overflow:auto;
   }
   #over.show{display:flex;}
-  @media (orientation:landscape) and (max-height:600px){
+  @media (orientation:landscape) and (max-height:700px){
     #nameCard .scoreBig{font-size:28px;margin:4px 0;}
     #nameCard .lbl{margin:8px 0 4px;}
   }
   #over .card{
     display:none;width:100%;max-width:560px;
-    background:#0b1a12;border:3px solid #6b4a1f;border-radius:10px;
-    box-shadow:0 0 0 2px #2b1c0a,0 18px 50px rgba(0,0,0,.7);
+    background:linear-gradient(180deg,#f4e6c4 0%,#e8d5a8 55%,#d9c08a 100%);
+    border:3px solid #8a6a2f;border-radius:10px;
+    box-shadow:0 0 0 2px #6b4a1f,0 18px 50px rgba(0,0,0,.7);
     padding:20px;text-align:center;
   }
   #over .card.show{display:block;}
-  #over .ttl{font-family:"Courier New",monospace;font-size:24px;color:#c9a227;letter-spacing:2px;}
-  #over .sub{font-family:"Courier New",monospace;font-size:12px;color:#a9c4ae;margin-top:6px;}
-  #over .scoreBig{font-family:"Courier New",monospace;font-size:38px;color:#ffd45e;margin:10px 0 4px;}
-  #over .lbl{display:block;font-family:"Courier New",monospace;font-size:11px;color:#7d9a82;letter-spacing:1px;margin:14px 0 6px;}
+  #over .ttl{font-family:"Courier New",monospace;font-size:24px;color:#7b1f14;letter-spacing:2px;font-weight:bold;}
+  #over .sub{font-family:"Courier New",monospace;font-size:12px;color:#5a3d1a;margin-top:6px;}
+  #over .scoreBig{font-family:"Courier New",monospace;font-size:38px;color:#7b1f14;margin:10px 0 4px;font-weight:bold;}
+  #over .lbl{display:block;font-family:"Courier New",monospace;font-size:11px;color:#6b4a24;letter-spacing:1px;margin:14px 0 6px;}
   #pname{
     width:100%;max-width:300px;padding:10px 12px;
     font-family:"Courier New",monospace;font-size:16px;text-align:center;
-    background:rgba(8,22,16,.9);border:2px solid #6b4a1f;border-radius:6px;color:#ffd45e;
+    background:#fbf3dd;border:2px solid #8a6a2f;border-radius:6px;color:#3b2a12;
   }
-  #pname:focus{outline:none;border-color:#c9a227;}
+  #pname:focus{outline:none;border-color:#7b1f14;}
   #over .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
-  #over .note{font-family:"Courier New",monospace;font-size:11px;color:#7d9a82;margin-top:10px;min-height:14px;}
+  #over .note{font-family:"Courier New",monospace;font-size:11px;color:#6b4a24;margin-top:10px;min-height:14px;}
   #over .boards{display:flex;gap:14px;margin-top:12px;text-align:left;flex-wrap:wrap;}
   #over .bcol{flex:1;min-width:200px;}
   #over .bhead{
-    font-family:"Courier New",monospace;font-size:11px;color:#9fe870;
-    letter-spacing:2px;border-bottom:1px solid #2f4a36;padding-bottom:5px;margin-bottom:5px;
+    font-family:"Courier New",monospace;font-size:11px;color:#2f5b1f;
+    letter-spacing:2px;border-bottom:2px solid rgba(120,86,32,.4);padding-bottom:5px;margin-bottom:5px;font-weight:bold;
   }
-  #over .bhead span{color:#5e7a63;}
+  #over .bhead span{color:#7b4a12;}
   #over ol{list-style:none;}
   #over ol li{
     display:flex;gap:8px;font-family:"Courier New",monospace;font-size:12px;
-    color:#dce8dd;padding:3px 0;border-bottom:1px solid rgba(47,74,54,.4);
+    color:#3b2a12;padding:3px 0;border-bottom:1px solid rgba(120,86,32,.28);
   }
-  #over ol li .n{color:#5e7a63;width:20px;flex:0 0 20px;}
+  #over ol li .n{color:#7b4a12;width:20px;flex:0 0 20px;font-weight:bold;}
   #over ol li .who{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  #over ol li .sc{color:#ffd45e;}
-  #over ol li.me{background:rgba(201,162,39,.14);}
-  #over ol li.loading{color:#5e7a63;justify-content:center;}
+  #over ol li .sc{color:#7b1f14;font-weight:bold;}
+  #over ol li.me{background:rgba(201,162,39,.3);border-radius:3px;}
+  #over ol li.loading{color:#8a6a2f;justify-content:center;}
   #over .promoWrap{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
-  #boardActions{position:sticky;top:0;z-index:3;background:#0b1a12;padding:8px 0;}
-  .btn.primary{border-color:#c9a227;color:#ffd45e;}
-  @media (orientation:landscape) and (max-height:600px){
+  #boardActions{position:sticky;top:0;z-index:3;background:#e8d5a8;padding:8px 0;border-radius:4px;}
+  .btn.primary{border-color:#7b1f14;color:#7b1f14;background:rgba(201,162,39,.35);}
+  #over .btn{color:#3b2a12;background:#fbf3dd;border-color:#8a6a2f;}
+  #over .btn:hover{background:#f0e4c0;border-color:#7b1f14;}
+  #over .btn.primary{background:rgba(201,162,39,.45);color:#7b1f14;border-color:#7b1f14;}
+  @media (orientation:landscape) and (max-height:700px){
     #over{padding:6px;align-items:stretch;}
     #over .card{max-width:100%;max-height:100dvh;overflow-y:auto;padding:10px;}
     #over .ttl{font-size:18px;}
@@ -244,6 +248,11 @@
   }
 
   #promoStrip{width:100%;max-width:1040px;display:flex;flex-direction:column;gap:6px;}
+  /* the under-game strip never shows on a phone held sideways; the ads appear
+     between levels and on the scoreboard instead, where there is room */
+  @media (orientation:landscape) and (max-height:700px){
+    body.touch #promoStrip{display:none !important;}
+  }
   .promoBox{
     animation:slotGlow 10s ease-in-out infinite;
   }
@@ -259,7 +268,7 @@
   }
   .plogo img{width:100%;height:100%;object-fit:cover;}
   .promoBig{
-    background:rgba(8,22,16,.7);border:2px solid #6b4a1f;border-radius:8px;
+    background:rgba(20,32,22,.92);border:2px solid #8a6a2f;border-radius:8px;
     padding:10px;text-align:left;
     display:flex;align-items:center;gap:12px;
   }
@@ -337,7 +346,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b15</div>
+  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b16</div>
 </div>
 
 <div id="over">
@@ -3024,7 +3033,7 @@ function enforceCanvasSize(){
     const landscape = window.innerWidth > window.innerHeight;
     /* size for any small landscape screen (a phone), regardless of touch state,
        so the whole rectangle is correct even before the first touch */
-    const isPhoneLandscape = landscape && vvh0 <= 600 && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+    const isPhoneLandscape = landscape && vvh0 <= 700 && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 
     if (!isPhoneLandscape){
       cv.style.width = "";
@@ -3037,25 +3046,35 @@ function enforceCanvasSize(){
     const vv = window.visualViewport;
     const vw = (vv && vv.width) ? vv.width : window.innerWidth;
     const vh = (vv && vv.height) ? vv.height : window.innerHeight;
-    const barH = bar ? Math.ceil(bar.getBoundingClientRect().height) : 34;
+    const barH = bar ? Math.ceil(bar.getBoundingClientRect().height) : 30;
 
-    /* STEP 1: the whole 600px-tall rectangle MUST fit vertically first.
-       height is the hard limit; we take the bar height plus a safety margin. */
-    const availH = vh - barH - 10;
+    /* the ad strip under the game, if it is showing, also takes height */
+    const strip = document.getElementById("promoStrip");
+    let stripH = 0;
+    if (strip){
+      const r = strip.getBoundingClientRect();
+      if (r.height > 0 && getComputedStyle(strip).display !== "none") stripH = Math.ceil(r.height);
+    }
+
+    /* pin the app to the true visible height so nothing sits under the URL bar */
+    const app = document.getElementById("app");
+    if (app){ app.style.height = Math.floor(vh) + "px"; app.style.maxHeight = Math.floor(vh) + "px"; }
+
+    /* STEP 1: the whole 600px-tall rectangle MUST fit in the gap between the bar
+       (top) and the strip (bottom), minus the frame border and a safety margin. */
+    const frameBorder = 4;   /* 2px each side */
+    const margin = 14;       /* generous so nothing ever clips */
+    const availH = vh - barH - stripH - frameBorder - margin;
 
     /* STEP 2: whatever width the pads+labels need, the canvas gets the rest. */
-    const reservedSides = 44 + 52 + 26 + 26 + 12;   /* padL padR labL labR gaps */
+    const reservedSides = 44 + 52 + 26 + 26 + 12 + frameBorder;
     const availW = vw - reservedSides;
 
     /* fit the 16:10 rectangle inside BOTH limits, height first so it never clips */
     const ar = 960 / 600;
     let h = availH;
     let w = h * ar;
-    if (w > availW){ w = availW; h = w / ar; }   /* if too wide, shrink to width */
-
-    /* pin the app to the true visible height so nothing sits under the URL bar */
-    const app = document.getElementById("app");
-    if (app){ app.style.height = Math.floor(vh) + "px"; app.style.maxHeight = Math.floor(vh) + "px"; }
+    if (w > availW){ w = availW; h = w / ar; }
 
     w = Math.floor(w); h = Math.floor(h);
     cv.style.width = w + "px";
