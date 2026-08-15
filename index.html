@@ -59,9 +59,8 @@
     overflow:hidden;background:#000;flex:0 1 auto;min-width:0;
   }
   canvas{display:block;width:100%;height:auto;max-height:100%;touch-action:none;}
-  body.mouseMode canvas{cursor:none;}
   canvas{cursor:default;}
-  body.keyMode canvas{cursor:default;}
+  body.playingMouse canvas{cursor:none;}
 
   #padL,#padR{display:none;}
   body.touch #padL,body.touch #padR{display:flex;}
@@ -120,6 +119,66 @@
   @media (orientation:portrait){
     body.touch #rotate{display:flex;}
   }
+  #over{
+    display:none;position:fixed;inset:0;z-index:40;
+    background:rgba(4,12,8,.9);
+    align-items:center;justify-content:center;padding:16px;overflow:auto;
+  }
+  #over.show{display:flex;}
+  #over .card{
+    display:none;width:100%;max-width:560px;
+    background:#0b1a12;border:3px solid #6b4a1f;border-radius:10px;
+    box-shadow:0 0 0 2px #2b1c0a,0 18px 50px rgba(0,0,0,.7);
+    padding:20px;text-align:center;
+  }
+  #over .card.show{display:block;}
+  #over .ttl{font-family:"Courier New",monospace;font-size:24px;color:#c9a227;letter-spacing:2px;}
+  #over .sub{font-family:"Courier New",monospace;font-size:12px;color:#a9c4ae;margin-top:6px;}
+  #over .scoreBig{font-family:"Courier New",monospace;font-size:38px;color:#ffd45e;margin:10px 0 4px;}
+  #over .lbl{display:block;font-family:"Courier New",monospace;font-size:11px;color:#7d9a82;letter-spacing:1px;margin:14px 0 6px;}
+  #pname{
+    width:100%;max-width:300px;padding:10px 12px;
+    font-family:"Courier New",monospace;font-size:16px;text-align:center;
+    background:rgba(8,22,16,.9);border:2px solid #6b4a1f;border-radius:6px;color:#ffd45e;
+  }
+  #pname:focus{outline:none;border-color:#c9a227;}
+  #over .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+  #over .note{font-family:"Courier New",monospace;font-size:11px;color:#7d9a82;margin-top:10px;min-height:14px;}
+  #over .boards{display:flex;gap:14px;margin-top:12px;text-align:left;flex-wrap:wrap;}
+  #over .bcol{flex:1;min-width:200px;}
+  #over .bhead{
+    font-family:"Courier New",monospace;font-size:11px;color:#9fe870;
+    letter-spacing:2px;border-bottom:1px solid #2f4a36;padding-bottom:5px;margin-bottom:5px;
+  }
+  #over .bhead span{color:#5e7a63;}
+  #over ol{list-style:none;}
+  #over ol li{
+    display:flex;gap:8px;font-family:"Courier New",monospace;font-size:12px;
+    color:#dce8dd;padding:3px 0;border-bottom:1px solid rgba(47,74,54,.4);
+  }
+  #over ol li .n{color:#5e7a63;width:20px;flex:0 0 20px;}
+  #over ol li .who{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #over ol li .sc{color:#ffd45e;}
+  #over ol li.me{background:rgba(201,162,39,.14);}
+  #over ol li.loading{color:#5e7a63;justify-content:center;}
+  #over .promoWrap{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+  .promoBox{
+    display:flex;align-items:center;gap:10px;text-align:left;
+    border:2px dashed #6b4a1f;border-radius:6px;padding:9px 12px;
+    text-decoration:none;color:#dce8dd;background:rgba(8,22,16,.6);
+  }
+  .promoBox:hover{border-color:#c9a227;border-style:solid;}
+  .promoBox .tag{
+    font-family:"Courier New",monospace;font-size:9px;letter-spacing:2px;
+    padding:4px 7px;border-radius:3px;color:#fff;white-space:nowrap;
+  }
+  .promoBox .txt{flex:1;min-width:0;}
+  .promoBox .txt b{display:block;font-family:"Courier New",monospace;font-size:13px;color:#ffd45e;font-weight:normal;}
+  .promoBox .txt i{font-style:normal;font-size:11px;color:#a9c4ae;}
+  .promoBox .go{font-family:"Courier New",monospace;font-size:10px;color:#0b1a12;background:#c9a227;padding:5px 9px;border-radius:3px;}
+
+  #promoStrip{width:100%;max-width:1040px;display:flex;flex-direction:column;gap:6px;}
+
   #rotate{
     display:none;position:fixed;inset:0;z-index:50;
     background:#0b1a12;flex-direction:column;
@@ -149,7 +208,43 @@
     <div id="padR"><div class="ring">FIRE</div></div>
   </div>
 
+  <div id="promoStrip"></div>
   <div id="tag"></div>
+</div>
+
+<div id="over">
+  <div class="card" id="nameCard">
+    <div class="ttl" id="overTitle">GAME OVER</div>
+    <div class="sub" id="overSub"></div>
+    <div class="scoreBig" id="overScore">000000</div>
+    <label class="lbl" for="pname">ENTER YOUR NAME FOR THE SCOREBOARD</label>
+    <input id="pname" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Your name">
+    <div class="row">
+      <button class="btn" id="bSave">SAVE MY SCORE</button>
+      <button class="btn" id="bSkip">SKIP</button>
+    </div>
+    <div class="note" id="saveNote"></div>
+  </div>
+
+  <div class="card" id="boardCard">
+    <div class="ttl">SCOREBOARD</div>
+    <div class="note" id="myRank"></div>
+    <div class="boards">
+      <div class="bcol">
+        <div class="bhead">TODAY <span id="dayDate"></span></div>
+        <ol id="dayList"><li class="loading">loading</li></ol>
+      </div>
+      <div class="bcol">
+        <div class="bhead">ALL TIME</div>
+        <ol id="allList"><li class="loading">loading</li></ol>
+      </div>
+    </div>
+    <div class="promoWrap" id="promoOverlay"></div>
+    <div class="row">
+      <button class="btn" id="bPlayAgain">PLAY AGAIN</button>
+      <button class="btn" id="bQuit">QUIT TO TITLE</button>
+    </div>
+  </div>
 </div>
 
 <div id="rotate">
@@ -158,6 +253,25 @@
 </div>
 
 <script>
+/* ============================================================
+   CONFIG - the only block you should need to edit
+   ============================================================ */
+
+/* your Apps Script web app, ending in /exec */
+const SCORE_API = "https://script.google.com/macros/s/AKfycbwQ80lTQyhQqrq3BzgO5FfaT1xrJNoEfzbE3J6Cvd9uKTg2RVWzUST9ozoYvoUW1UDl/exec";
+
+/* PROMO SLOTS - placeholders for now.
+   When you send the three links these become real. Set SHOW_PROMOS to false
+   to hide every slot while you look at the rest of the game. */
+const SHOW_PROMOS = true;
+const PROMOS = [
+  { label:"SLOT 1", title:"PROMO SLOT ONE", line:"Your first link goes here", url:"#", cta:"Open", tint:"#b3241c" },
+  { label:"SLOT 2", title:"PROMO SLOT TWO", line:"Your second link goes here", url:"#", cta:"Open", tint:"#2f6fb0" },
+  { label:"SLOT 3", title:"PROMO SLOT THREE", line:"Your third link goes here", url:"#", cta:"Open", tint:"#4f9e46" }
+];
+
+/* ========================= end of config ========================= */
+
 "use strict";
 
 /* ============================================================
@@ -217,6 +331,10 @@ const TOUCH = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
 let inputMode = TOUCH ? "touch" : null;   /* null until the player picks on desktop */
 let aimY = 300;                            /* the height the archer is heading for */
 let keyTarget = 300;
+let runStart = 0;          /* when this run began */
+let runEnded = false;      /* so a run is only submitted once */
+let lastRun = null;
+let gloryTimer = 0;   /* seconds of celebration before the scoreboard */
 const modeBtns = [
   { mode:"mouse", label:"MOUSE",    x:352, y:412, w:170, h:36 },
   { mode:"keys",  label:"KEYBOARD", x:542, y:412, w:170, h:36 }
@@ -230,6 +348,19 @@ function toCanvas(cx, cy){
   return { x:(cx - r.left) * (W / r.width), y:(cy - r.top) * (H / r.height) };
 }
 cv.addEventListener("mousemove", e => { const p = toCanvas(e.clientX, e.clientY); mouse.x = p.x; mouse.y = p.y; });
+cv.addEventListener("mousemove", e => {
+  if (TOUCH) return;
+  const p = toCanvas(e.clientX, e.clientY);
+  mouse.x = p.x; mouse.y = p.y;
+  if (state === "title" && !inputMode){
+    hoverBtn = -1;
+    modeBtns.forEach((bt, i) => {
+      if (p.x > bt.x && p.x < bt.x + bt.w && p.y > bt.y && p.y < bt.y + bt.h) hoverBtn = i;
+    });
+    if (cv.style) cv.style.cursor = hoverBtn >= 0 ? "pointer" : "default";
+  }
+});
+
 cv.addEventListener("mousedown", e => {
   if (TOUCH) return;
   e.preventDefault();
@@ -249,12 +380,12 @@ cv.addEventListener("mousedown", e => {
 
 function setMode(m){
   inputMode = m;
-  document.body.classList.remove("mouseMode","keyMode");
-  document.body.classList.add(m === "keys" ? "keyMode" : "mouseMode");
+  updateCursor();
   const el = document.getElementById("tag");
   if (el) el.innerHTML = m === "keys"
     ? 'Up and down arrows move the archer <b>&middot;</b> Spacebar shoots <b>&middot;</b> P pause <b>&middot;</b> R restart stage'
     : 'Move the mouse up and down <b>&middot;</b> Click to loose an arrow <b>&middot;</b> P pause <b>&middot;</b> R restart stage';
+  if (cv.style) cv.style.cursor = "";
   tone(660, 0.08, "square", 0.06);
 }
 cv.addEventListener("contextmenu", e => e.preventDefault());
@@ -272,11 +403,11 @@ window.addEventListener("keyup", e => { keys[e.code] = false; });
 function act(){
   if (state === "title"){
     if (!inputMode) return;          /* pick mouse or keyboard first */
-    startLevel(0); return;
+    newRun(); return;
   }
   if (state === "note"){ advance(); return; }
-  if (state === "dead"){ score = noteData ? noteData.scoreAtStart : 0; startLevel(levelIndex); return; }
-  if (state === "win"){ state = "title"; return; }
+  if (state === "dead"){ return; }   /* the overlay handles what happens next */
+  if (state === "win"){ if (gloryTimer > 0){ gloryTimer = 0; endRun("CLEARED"); } return; }
   if (state === "play" && !paused) fire();
 }
 
@@ -486,6 +617,7 @@ function finishLevel(){
                scoreAtStart: noteData ? noteData.scoreAtStart : 0 };
   sfx.win();
   state = levelIndex + 1 < LEVELS.length ? "note" : "win";
+  if (state === "win") gloryTimer = 15 * 60;
 }
 
 function advance(){ if (levelIndex + 1 < LEVELS.length) startLevel(levelIndex + 1); else state = "win"; }
@@ -506,6 +638,11 @@ function fire(){
    ============================================================ */
 function update(dt){
   time += dt;
+  updateCursor();
+  if (state === "win" && gloryTimer > 0){
+    gloryTimer -= dt;
+    if (gloryTimer <= 0) endRun("CLEARED");
+  }
   if (shake > 0) shake = Math.max(0, shake - dt * 0.9);
   if (state !== "play" || paused) return;
 
@@ -686,7 +823,7 @@ function update(dt){
   if (flashMsg){ flashMsg.t -= dt; if (flashMsg.t <= 0) flashMsg = null; }
 
   /* two ways to lose. they touch you, or the quiver runs dry with the wave still coming */
-  if (croc.hp <= 0){ state = "dead"; return; }
+  if (croc.hp <= 0){ state = "dead"; gloryTimer = 0; endRun("LOST"); return; }
   if (clockMax > 0){
     /* a timed stage is over when the clock runs out and the last of them has gone by */
     if (clock <= 0 && targets.filter(t => t.alive).length === 0){ finishLevel(); return; }
@@ -695,7 +832,8 @@ function update(dt){
   /* an empty quiver only finishes you on the stages where the targets keep coming back.
      out in the channel you can still clear the stage by staying out of their way */
   if (L.dryFatal && arrows === 0 && shafts.filter(s => !s.stuck).length === 0){
-    dryTimer -= dt; if (dryTimer <= 0) state = "dead";
+    dryTimer -= dt;
+    if (dryTimer <= 0){ state = "dead"; gloryTimer = 0; endRun("LOST"); }
   } else dryTimer = 60;
 }
 
@@ -1977,7 +2115,12 @@ function drawWin(){
 
   ctx.fillStyle = Math.floor(time/30)%2 ? "#ffd45e" : "#fff";
   ctx.font = "bold 18px 'Courier New', monospace";
-  ctx.fillText("PRESS FIRE FOR THE TITLE SCREEN", W/2, 288);
+  if (gloryTimer > 0){
+    ctx.fillStyle = "#9fe870"; ctx.font = "bold 15px 'Courier New', monospace";
+    ctx.fillText("SCOREBOARD IN " + Math.ceil(gloryTimer / 60) + "   (PRESS FIRE TO SKIP)", W/2, 288);
+  } else {
+    ctx.fillText("SCOREBOARD LOADING", W/2, 288);
+  }
 }
 
 /* ============================================================
@@ -2103,6 +2246,7 @@ const $ = id => document.getElementById(id);
 
 /* the bar */
 function syncBar(){
+  updateCursor();
   const p = $("bPause"), a = $("bAbort");
   if (p){
     p.textContent = paused ? "RESUME" : "PAUSE";
@@ -2111,16 +2255,25 @@ function syncBar(){
   }
   if (a) a.disabled = (state === "title");
 }
-if ($("bNew")) $("bNew").addEventListener("click", () => {
-  score = 0; hiScore = Math.max(hiScore, score);
-  startLevel(0); paused = false; syncBar();
-});
+function newRun(){
+  score = 0;
+  runStart = Date.now();
+  runEnded = false;
+  hideOverlay();
+  startLevel(0);
+  paused = false;
+  syncBar();
+}
+if ($("bNew")) $("bNew").addEventListener("click", newRun);
 if ($("bPause")) $("bPause").addEventListener("click", () => {
   if (state === "play"){ paused = !paused; syncBar(); }
 });
 if ($("bAbort")) $("bAbort").addEventListener("click", () => {
   if (state === "title") return;
-  paused = false; state = "title"; syncBar();
+  paused = false;
+  if (!runEnded && score > 0){ state = "dead"; endRun("LOST"); }
+  else { state = "title"; hideOverlay(); }
+  syncBar();
 });
 if ($("bSound")) $("bSound").addEventListener("click", () => {
   muted = !muted;
@@ -2139,7 +2292,184 @@ if ($("bSound")) $("bSound").addEventListener("click", () => {
     ? 'Slide the pad on the left to aim <b>&middot;</b> Tap FIRE to shoot'
     : 'Choose mouse or keyboard on the title screen <b>&middot;</b> P pause <b>&middot;</b> R restart stage';
   document.body.classList.toggle("touch", TOUCH);
-  document.body.classList.add(TOUCH ? "touchMode" : "mouseMode");
+})();
+
+/* the cursor only disappears while you are actually playing with the mouse,
+   so the title screen and its buttons are always usable */
+function updateCursor(){
+  const hide = inputMode === "mouse" && state === "play" && !paused;
+  document.body.classList.toggle("playingMouse", hide);
+}
+
+/* ============================================================
+   SCOREBOARD
+   ============================================================ */
+let boardCache = null;
+
+/* JSONP, because a plain fetch to Apps Script trips the browser cross origin rules */
+function callApi(params, done){
+  if (!SCORE_API || SCORE_API.indexOf("/exec") < 0){ done(null); return; }
+  const cb = "cbScore" + Math.floor(Math.random() * 1e9);
+  const q = [];
+  for (const k in params) q.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
+  q.push("callback=" + cb);
+  let sc; try { sc = document.createElement("script"); } catch(e){ done(null); return; }
+  if (!sc){ done(null); return; }
+  let finished = false;
+  const cleanup = () => { try { delete window[cb]; } catch(e){} if (sc.parentNode) sc.parentNode.removeChild(sc); };
+  window[cb] = data => { finished = true; cleanup(); done(data); };
+  sc.onerror = () => { if (!finished){ cleanup(); done(null); } };
+  setTimeout(() => { if (!finished){ cleanup(); done(null); } }, 12000);
+  sc.src = SCORE_API + "?" + q.join("&");
+  document.body.appendChild(sc);
+}
+
+function endRun(outcome){
+  if (runEnded) return;
+  runEnded = true;
+  const end = Date.now();
+  lastRun = {
+    score: score,
+    stage: LEVELS[levelIndex].n,
+    outcome: outcome,
+    seconds: Math.max(0, Math.round((end - (runStart || end)) / 1000)),
+    startTime: runStart || end,
+    endTime: end,
+    device: TOUCH ? "phone" : "desktop"
+  };
+  showNameCard(outcome);
+}
+
+/* ---------- the overlay ---------- */
+function showOverlay(which){
+  try {
+    const o = $("over"), n = $("nameCard"), b = $("boardCard");
+    if (!o || !o.classList) return;
+    o.classList.add("show");
+    if (n && n.classList) n.classList.toggle("show", which === "name");
+    if (b && b.classList) b.classList.toggle("show", which === "board");
+  } catch (e) {}
+}
+function hideOverlay(){
+  try { const o = $("over"); if (o && o.classList) o.classList.remove("show"); } catch (e) {}
+}
+function setText(id, t){ try { const n = $(id); if (n) n.textContent = t; } catch(e){} }
+
+function showNameCard(outcome){
+  setText("overTitle", outcome === "CLEARED" ? "THE SWAMP IS SAFE" : "GAME OVER");
+  setText("overSub", outcome === "CLEARED"
+    ? "All ten stages held."
+    : "You reached stage " + lastRun.stage + ", " + LEVELS[levelIndex].title);
+  setText("overScore", pad(lastRun.score, 6));
+  setText("saveNote", "");
+  try {
+    const inp = $("pname");
+    if (inp){
+      try { inp.value = localStorage.getItem("crocName") || ""; } catch(e){ inp.value = ""; }
+      setTimeout(() => { try { inp.focus(); } catch(e){} }, 60);
+    }
+  } catch(e){}
+  showOverlay("name");
+}
+
+function submitRun(name){
+  setText("saveNote", "Saving...");
+  try { $("bSave").disabled = true; } catch(e){}
+  try { localStorage.setItem("crocName", name); } catch(e){}
+  callApi({
+    action: "submit",
+    name: name,
+    score: lastRun.score,
+    stage: lastRun.stage,
+    outcome: lastRun.outcome,
+    seconds: lastRun.seconds,
+    startTime: lastRun.startTime,
+    endTime: lastRun.endTime,
+    device: lastRun.device
+  }, data => {
+    try { $("bSave").disabled = false; } catch(e){}
+    if (data && data.ok){
+      boardCache = data;
+      paintBoards(data, name);
+    } else {
+      paintBoards(null, name);
+      setText("myRank", "Could not reach the scoreboard just now.");
+    }
+    showOverlay("board");
+  });
+}
+
+function loadBoards(){
+  callApi({ action: "board" }, data => {
+    boardCache = data;
+    paintBoards(data, null);
+  });
+}
+
+function paintBoards(data, myName){
+  const day = $("dayList"), all = $("allList");
+  if (!day || !all || day.innerHTML === undefined) return;
+  if (!data || !data.ok){
+    day.innerHTML = '<li class="loading">unavailable</li>';
+    all.innerHTML = '<li class="loading">unavailable</li>';
+    return;
+  }
+  setText("dayDate", data.today ? "(" + data.today + ", IST)" : "");
+  const row = (r, i) => {
+    const mine = myName && r.name === myName && r.score === lastRun.score;
+    return '<li class="' + (mine ? "me" : "") + '">' +
+      '<span class="n">' + (i + 1) + '</span>' +
+      '<span class="who">' + escapeHtml(r.name) + '</span>' +
+      '<span class="sc">' + pad(r.score, 6) + '</span></li>';
+  };
+  day.innerHTML = data.daily && data.daily.length ? data.daily.map(row).join("") : '<li class="loading">nobody yet today</li>';
+  all.innerHTML = data.overall && data.overall.length ? data.overall.map(row).join("") : '<li class="loading">nobody yet</li>';
+
+  if (data.dailyRank || data.overallRank){
+    setText("myRank", "You are number " + data.dailyRank + " today and number " + data.overallRank + " of all time.");
+  }
+}
+
+function escapeHtml(t){
+  return String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- overlay buttons ---------- */
+if ($("bSave")) $("bSave").addEventListener("click", () => {
+  const v = ($("pname").value || "").trim();
+  if (!v){ $("saveNote").textContent = "Type a name first, or press skip."; return; }
+  submitRun(v.slice(0, 16));
+});
+if ($("pname")) $("pname").addEventListener("keydown", e => {
+  if (e.code === "Enter" || e.key === "Enter"){ e.preventDefault(); $("bSave").click(); }
+  e.stopPropagation();
+});
+if ($("bSkip")) $("bSkip").addEventListener("click", () => {
+  loadBoards();
+  $("myRank").textContent = "";
+  showOverlay("board");
+});
+if ($("bPlayAgain")) $("bPlayAgain").addEventListener("click", () => { hideOverlay(); newRun(); });
+if ($("bQuit")) $("bQuit").addEventListener("click", () => { hideOverlay(); state = "title"; syncBar(); });
+
+/* ---------- promo slots ---------- */
+function promoBox(pr){
+  return '<a class="promoBox" href="' + pr.url + '" target="_blank" rel="noopener">' +
+    '<span class="tag" style="background:' + pr.tint + '">' + escapeHtml(pr.label) + '</span>' +
+    '<span class="txt"><b>' + escapeHtml(pr.title) + '</b><i>' + escapeHtml(pr.line) + '</i></span>' +
+    '<span class="go">' + escapeHtml(pr.cta) + '</span></a>';
+}
+(function(){
+  if (!SHOW_PROMOS || !PROMOS.length) return;
+  const strip = $("promoStrip");
+  if (strip) strip.innerHTML = promoBox(PROMOS[0]);
+  const ov = $("promoOverlay");
+  if (ov) ov.innerHTML = PROMOS.map(promoBox).join("");
+  /* the strip under the game rotates */
+  if (PROMOS.length > 1 && strip){
+    let i = 0;
+    setInterval(() => { i = (i + 1) % PROMOS.length; strip.innerHTML = promoBox(PROMOS[i]); }, 12000);
+  }
 })();
 
 let last = performance.now();
