@@ -403,7 +403,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b17</div>
+  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b18</div>
 </div>
 
 <div id="phoneMenu">
@@ -2353,7 +2353,7 @@ function drawLoading(){
     ctx.fillText(line, cx + 20, cy + 55);
     ctx.textAlign = "right";
     ctx.fillStyle = "rgba(233,245,236,0.6)"; ctx.font = "bold 11px 'Courier New', monospace";
-    ctx.fillText("LINK ABOVE THE GAME", cx + cw - 18, cy + 38);
+    ctx.fillText(TOUCH ? "LINK ABOVE THE GAME" : "LINK BELOW THE GAME", cx + cw - 18, cy + 38);
     ctx.textAlign = "center";
   }
 }
@@ -2741,6 +2741,20 @@ function newRun(){
   paused = false;
   syncBar();
 }
+
+/* return to the title. on desktop, forget the mouse/keyboard choice so the player
+   picks again with the cursor available. on touch there is nothing to forget. */
+function goToTitle(){
+  state = "title";
+  paused = false;
+  hideOverlay();
+  if (!TOUCH){
+    inputMode = null;
+    try { document.body.classList.remove("playingMouse"); } catch(e){}
+    try { updateCursor(); } catch(e){}
+  }
+  syncBar();
+}
 if ($("bNew")) $("bNew").addEventListener("click", newRun);
 if ($("bPause")) $("bPause").addEventListener("click", () => {
   if (state === "play"){ paused = !paused; syncBar(); }
@@ -2749,7 +2763,7 @@ if ($("bAbort")) $("bAbort").addEventListener("click", () => {
   if (state === "title") return;
   paused = false;
   if (!runEnded && score > 0){ state = "dead"; endRun("LOST"); }
-  else { state = "title"; hideOverlay(); }
+  else { goToTitle(); }
   syncBar();
 });
 if ($("bSound")) $("bSound").addEventListener("click", () => {
@@ -2802,7 +2816,7 @@ if ($("pmAbort")) $("pmAbort").addEventListener("click", () => {
   closePhoneMenu();
   paused = false;
   if (!runEnded && score > 0){ state = "dead"; endRun("LOST"); }
-  else { state = "title"; hideOverlay(); }
+  else { goToTitle(); }
 });
 
 /* ---------- phone: the thin rotating ad across the top ---------- */
@@ -2989,7 +3003,7 @@ if ($("bSkip")) $("bSkip").addEventListener("click", () => {
   showOverlay("board");
 });
 if ($("bPlayAgain")) $("bPlayAgain").addEventListener("click", () => { hideOverlay(); newRun(); });
-if ($("bQuit")) $("bQuit").addEventListener("click", () => { hideOverlay(); state = "title"; syncBar(); });
+if ($("bQuit")) $("bQuit").addEventListener("click", goToTitle);
 
 /* ---------- promo slots ---------- */
 function promoLogo(pr){
