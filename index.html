@@ -435,7 +435,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b19</div>
+  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b20</div>
 </div>
 
 <div id="phoneMenu">
@@ -3157,14 +3157,13 @@ setInterval(() => {
   }, 20000);
 })();
 
-/* ---------- the portrait screen: calm swamp water and the message, nothing busy ---------- */
+/* ---------- the portrait screen: the real title attract scene in the rectangle ---------- */
 (function(){
   const dc = document.getElementById("demo");
   if (!dc || !dc.getContext) return;
   const g = dc.getContext("2d");
   let DW = 480, DH = 300;
   function fit(){
-    /* match the canvas backing store to its displayed 16:10 rectangle */
     const r = dc.getBoundingClientRect();
     const w = Math.max(240, Math.round(r.width) || 480);
     const h = Math.max(150, Math.round(r.height) || Math.round(w * 10 / 16));
@@ -3175,45 +3174,111 @@ setInterval(() => {
   window.addEventListener("orientationchange", () => setTimeout(fit, 120));
   [200, 500, 1000].forEach(ms => setTimeout(fit, ms));
 
+  /* a small self-contained crocodile archer, drawn to the demo context */
+  function demoCroc(x, y, sc, firing){
+    g.save(); g.translate(x, y); g.scale(sc, sc);
+    /* shadow */
+    g.fillStyle = "rgba(0,0,0,0.2)"; g.beginPath(); g.ellipse(0, 40, 30, 7, 0, 0, 6.29); g.fill();
+    /* tail */
+    g.fillStyle = "#2f6c30";
+    g.beginPath(); g.moveTo(-6, 10);
+    g.quadraticCurveTo(-46, 12 + Math.sin(t*0.06)*5, -70, 34 + Math.sin(t*0.06)*10);
+    g.quadraticCurveTo(-40, 26, -8, 24); g.closePath(); g.fill();
+    /* body */
+    g.fillStyle = "#4f9e46";
+    g.beginPath(); g.ellipse(0, 8, 24, 30, 0, 0, 6.29); g.fill();
+    g.fillStyle = "#d9e07a"; g.beginPath(); g.ellipse(3, 12, 13, 20, 0, 0, 6.29); g.fill();
+    /* legs */
+    g.fillStyle = "#4f9e46"; g.fillRect(-16, 30, 12, 16); g.fillRect(6, 30, 12, 16);
+    g.fillStyle = "#d9e07a"; g.beginPath(); g.ellipse(-10, 48, 9, 5, 0, 0, 6.29); g.ellipse(12, 48, 9, 5, 0, 0, 6.29); g.fill();
+    /* head */
+    g.fillStyle = "#4f9e46"; g.beginPath(); g.ellipse(9, -30, 17, 14, 0, 0, 6.29); g.fill();
+    g.fillRect(16, -34, 30, 11);   /* snout */
+    g.fillStyle = "#fff";
+    for (let k = 0; k < 4; k++){ g.beginPath(); g.moveTo(22 + k*6, -23); g.lineTo(25 + k*6, -23); g.lineTo(23 + k*6, -18); g.closePath(); g.fill(); }
+    g.fillStyle = "#111"; g.beginPath(); g.arc(6, -34, 3, 0, 6.29); g.fill();
+    /* the bow */
+    g.strokeStyle = "#7a4a1a"; g.lineWidth = 4;
+    g.beginPath(); g.arc(24, -8, 26, -1.15, 1.15); g.stroke();
+    if (!firing){
+      g.strokeStyle = "#e8d9b0"; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(24, -32); g.lineTo(24, 16); g.stroke();
+    }
+    g.restore();
+  }
+
   const portraitMQ = window.matchMedia ? window.matchMedia("(orientation:portrait)") : null;
   let t = 0;
   function frame(){
     const hasTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
     const isPortrait = portraitMQ ? portraitMQ.matches : (window.innerHeight > window.innerWidth);
-    const showing = hasTouch && isPortrait;
-    if (!showing){ requestAnimationFrame(frame); return; }
+    if (!(hasTouch && isPortrait)){ requestAnimationFrame(frame); return; }
     t++;
 
-    /* the swamp water */
-    const grd = g.createLinearGradient(0, 0, 0, DH);
-    grd.addColorStop(0, "#0e5673"); grd.addColorStop(0.5, "#0a4055"); grd.addColorStop(1, "#062634");
-    g.fillStyle = grd; g.fillRect(0, 0, DW, DH);
+    const S = DW / 480;   /* scale factor from a 480-wide reference */
 
-    /* soft light shafts */
-    g.fillStyle = "rgba(180,230,255,0.04)";
-    for (let i = 0; i < 5; i++){
-      g.beginPath();
-      g.moveTo(40 + i*90, 0); g.lineTo(80 + i*90, 0);
-      g.lineTo(50 + i*90, DH); g.lineTo(20 + i*90, DH);
-      g.closePath(); g.fill();
+    /* the sky */
+    const sky = g.createLinearGradient(0, 0, 0, DH);
+    sky.addColorStop(0, "#8fd2f0"); sky.addColorStop(0.6, "#bfe3f2"); sky.addColorStop(1, "#dff2e0");
+    g.fillStyle = sky; g.fillRect(0, 0, DW, DH);
+    /* sun */
+    g.fillStyle = "rgba(255,238,150,0.5)"; g.beginPath(); g.arc(DW - 50*S, 54*S, 30*S, 0, 6.29); g.fill();
+    g.fillStyle = "rgba(255,246,190,0.9)"; g.beginPath(); g.arc(DW - 50*S, 54*S, 18*S, 0, 6.29); g.fill();
+    /* clouds */
+    g.fillStyle = "rgba(255,255,255,0.85)";
+    for (let i = 0; i < 3; i++){
+      const cx = ((t * 0.2 + i * 190) % (DW + 120)) - 60;
+      const cy = (40 + i * 26) * S;
+      g.beginPath(); g.arc(cx, cy, 15*S, 0, 6.29); g.arc(cx + 16*S, cy - 6*S, 18*S, 0, 6.29); g.arc(cx + 34*S, cy, 15*S, 0, 6.29); g.fill();
+    }
+    /* rolling hills */
+    g.fillStyle = "#4e8f43"; g.beginPath(); g.moveTo(0, DH*0.72);
+    g.quadraticCurveTo(DW*0.3, DH*0.60, DW*0.6, DH*0.72); g.quadraticCurveTo(DW*0.85, DH*0.80, DW, DH*0.70);
+    g.lineTo(DW, DH); g.lineTo(0, DH); g.closePath(); g.fill();
+    g.fillStyle = "#3c7a37"; g.beginPath(); g.moveTo(0, DH*0.80);
+    g.quadraticCurveTo(DW*0.4, DH*0.70, DW*0.7, DH*0.82); g.quadraticCurveTo(DW*0.9, DH*0.88, DW, DH*0.80);
+    g.lineTo(DW, DH); g.lineTo(0, DH); g.closePath(); g.fill();
+    /* the water at the bottom */
+    g.fillStyle = "#2f6f86"; g.fillRect(0, DH*0.86, DW, DH*0.14);
+    g.strokeStyle = "rgba(255,255,255,0.12)"; g.lineWidth = 1;
+    for (let i = 0; i < 3; i++){ g.beginPath(); g.moveTo(0, DH*(0.88 + i*0.03)); g.lineTo(DW, DH*(0.88 + i*0.03)); g.stroke(); }
+
+    /* balloons drifting up the right */
+    for (let i = 0; i < 4; i++){
+      const bx = DW * (0.55 + i * 0.12);
+      const by = (DH + 40) - (((t * 0.7) + i * 120) % (DH + 90));
+      g.save(); g.translate(bx, by); g.scale(S, S);
+      g.fillStyle = "#e2483a"; g.beginPath(); g.arc(0, 0, 13, 0, 6.29); g.fill();
+      g.fillStyle = "rgba(255,255,255,0.4)"; g.beginPath(); g.arc(-4, -4, 4, 0, 6.29); g.fill();
+      g.strokeStyle = "rgba(120,30,20,0.6)"; g.lineWidth = 1; g.beginPath(); g.moveTo(0, 13); g.lineTo(0, 24); g.stroke();
+      /* the little chicken body */
+      g.fillStyle = "#c9382c"; g.beginPath(); g.ellipse(0, 30, 8, 6, 0, 0, 6.29); g.fill();
+      g.fillStyle = "#ffcf3f"; g.beginPath(); g.moveTo(7, 29); g.lineTo(12, 30); g.lineTo(7, 32); g.closePath(); g.fill();
+      g.restore();
     }
 
-    /* a few drifting bubbles, calm */
-    for (let i = 0; i < 16; i++){
-      const by = DH - ((t * (0.3 + (i%3)*0.15) + i * 70) % (DH + 40));
-      const bx = 24 + (i * 61) % DW + Math.sin(t * 0.02 + i) * 6;
-      g.fillStyle = "rgba(200,230,245,0.16)";
-      g.beginPath(); g.arc(bx, by, 2 + (i%3), 0, 6.29); g.fill();
+    /* the archer on the left bank, firing on a loop */
+    const cyc = t % 150;
+    demoCroc(48 * S, DH * 0.72, S * 1.05, cyc > 40 && cyc < 120);
+    if (cyc > 40 && cyc < 120){
+      const ax = 48*S + 40*S + (cyc - 40) * 5 * S;
+      const ay = DH * 0.72 - 16 * S;
+      g.save(); g.translate(ax, ay); g.scale(S, S);
+      g.strokeStyle = "#e8d9b0"; g.lineWidth = 2.5;
+      g.beginPath(); g.moveTo(-24, 0); g.lineTo(14, 0); g.stroke();
+      g.fillStyle = "#d8dee3"; g.beginPath(); g.moveTo(22, 0); g.lineTo(12, -5); g.lineTo(12, 5); g.closePath(); g.fill();
+      g.fillStyle = "#c9382c"; g.beginPath(); g.moveTo(-24, 0); g.lineTo(-16, -5); g.lineTo(-12, 0); g.closePath(); g.fill();
+      g.restore();
     }
 
-    /* the sandy floor and a little weed */
-    g.fillStyle = "#c2a86a"; g.fillRect(0, DH - 22, DW, 22);
-    g.fillStyle = "#3a7d3a";
-    for (let i = 0; i < 9; i++){
-      const wx = 24 + i*48;
-      const hh = 24 + (i % 3) * 20 + Math.sin(t * 0.05 + i) * 4;
-      g.fillRect(wx, DH - 22 - hh, 5, hh);
-    }
+    /* the game name and mission, across the top */
+    g.textAlign = "center";
+    g.save(); g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = 8 * S;
+    g.fillStyle = "#c9a227"; g.font = "bold " + Math.round(30 * S) + "px 'Courier New', monospace";
+    g.fillText("CROCODILE ARCHER", DW/2, 32 * S);
+    g.restore();
+    g.fillStyle = "#2f6c30"; g.font = "bold " + Math.round(12 * S) + "px 'Courier New', monospace";
+    g.fillText("MISSION - DEFEND THE SWAMP", DW/2, 50 * S);
 
     requestAnimationFrame(frame);
   }
