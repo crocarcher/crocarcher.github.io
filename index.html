@@ -137,20 +137,19 @@
     #promoStrip{display:none;}
     #frame{border-width:2px;border-radius:5px;flex:0 0 auto;}
     #stage{gap:2px;padding:0;align-items:center;width:100%;justify-content:space-between;flex:1 1 auto;min-height:0;overflow:hidden;}
-    /* the canvas fits INSIDE both the leftover height and the leftover width, and
-       aspect-ratio keeps its 16:10 shape. because we constrain by max-* and let
-       width/height be auto, the WHOLE 960x600 is always visible - nothing clips. */
+    /* the canvas SIZE is set in pixels by the JS enforcer (enforceCanvasSize),
+       which measures the real space and guarantees the whole rectangle is visible.
+       CSS only provides fallback bounds in case JS has not run yet. */
     canvas{
       display:block;
-      width:auto;
-      height:auto;
+      width:auto;height:auto;
       aspect-ratio:960 / 600;
-      max-height:calc(100dvh - 46px);      /* the short screen minus the thin bar */
-      max-width:calc(100vw - 148px);       /* minus the two pads and two labels */
+      max-height:calc(100dvh - 46px);
+      max-width:calc(100vw - 150px);
     }
     #padL,#padR,.padLabel{align-self:center;}
-    #padL{width:44px;flex:0 0 44px;height:calc(100dvh - 46px);max-height:78vw;}
-    #padR{width:52px;flex:0 0 52px;height:calc(100dvh - 46px);max-height:78vw;}
+    #padL{width:44px;flex:0 0 44px;}
+    #padR{width:52px;flex:0 0 52px;}
     #padR .ring{width:44px;height:44px;font-size:9px;}
     #knob{width:38px;height:38px;border-radius:10px;}
     .padLabel{flex:0 0 24px;font-size:9px;gap:4px;}
@@ -334,7 +333,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;bottom:6px;right:8px;font:bold 14px monospace;color:#c9a227;z-index:60;pointer-events:none;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:4px;">BUILD 12</div>
+  <div id="buildTag" style="position:fixed;bottom:6px;right:8px;font:bold 14px monospace;color:#c9a227;z-index:60;pointer-events:none;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:4px;">BUILD 13</div>
 </div>
 
 <div id="over">
@@ -523,8 +522,21 @@ function enableTouchMode(){
   try { refreshCaption(); } catch(e){}
   try { setTimeout(enforceCanvasSize, 30); } catch(e){}
 }
-/* the first genuine touch anywhere switches the whole game into phone mode */
-window.addEventListener("touchstart", enableTouchMode, { once:true, passive:true, capture:true });
+/* A real touchscreen device is small. A laptop trackpad can fire touch events but
+   the laptop screen is large, so we ALSO require a small screen. This way a
+   trackpad tap on a big laptop can never switch on the phone controls. */
+function looksLikePhone(){
+  const smallest = Math.min(window.innerWidth || 9999, window.innerHeight || 9999);
+  const largest  = Math.max(window.innerWidth || 0, window.innerHeight || 0);
+  /* a phone or small tablet: short side small AND long side not laptop-sized */
+  return smallest <= 500 && largest <= 950;
+}
+window.addEventListener("touchstart", function onFirstTouch(e){
+  /* a genuine finger touch on a small screen only */
+  if (!looksLikePhone()) return;              /* laptop trackpad: ignore */
+  window.removeEventListener("touchstart", onFirstTouch, true);
+  enableTouchMode();
+}, { passive:true, capture:true });
 let aimY = 300;                            /* the height the archer is heading for */
 let keyTarget = 300;
 let runStart = 0;          /* when this run began */
@@ -3006,13 +3018,10 @@ function enforceCanvasSize(){
     const bar = document.getElementById("bar");
     if (!cv) return;
 
-    /* only take over on a real phone in landscape; desktop uses its own clean layout */
-    const isPhoneLandscape = TOUCH &&
-      (window.innerWidth > window.innerHeight) &&
-      (window.innerHeight <= 600);
+    const landscape = window.innerWidth > window.innerHeight;
+    const isPhoneLandscape = TOUCH && landscape && (window.innerHeight <= 700);
 
     if (!isPhoneLandscape){
-      /* let the desktop CSS rule the canvas */
       cv.style.width = "";
       cv.style.height = "";
       cv.style.maxWidth = "";
@@ -3022,36 +3031,46 @@ function enforceCanvasSize(){
 
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const barH = bar ? bar.getBoundingClientRect().height : 34;
-    /* space left after the bar (top) and the side pads+labels */
-    const reservedSides = 44 + 52 + 24 + 24 + 12;   /* padL padR labL labR gaps */
-    const availH = vh - barH - 8;
+    const barH = bar ? Math.ceil(bar.getBoundingClientRect().height) : 34;
+
+    /* STEP 1: the whole 600px-tall rectangle MUST fit vertically first.
+       height is the hard limit; we take the bar height plus a safety margin. */
+    const availH = vh - barH - 10;
+
+    /* STEP 2: whatever width the pads+labels need, the canvas gets the rest. */
+    const reservedSides = 44 + 52 + 26 + 26 + 12;   /* padL padR labL labR gaps */
     const availW = vw - reservedSides;
 
-    /* fit 960x600 inside avail, keeping aspect, taking whichever bound is tighter */
+    /* fit the 16:10 rectangle inside BOTH limits, height first so it never clips */
     const ar = 960 / 600;
-    let w = availW, h = w / ar;
-    if (h > availH){ h = availH; w = h * ar; }
+    let h = availH;
+    let w = h * ar;
+    if (w > availW){ w = availW; h = w / ar; }   /* if too wide, shrink to width */
 
-    cv.style.width = Math.floor(w) + "px";
-    cv.style.height = Math.floor(h) + "px";
+    w = Math.floor(w); h = Math.floor(h);
+    cv.style.width = w + "px";
+    cv.style.height = h + "px";
     cv.style.maxWidth = "none";
     cv.style.maxHeight = "none";
 
-    /* match the pads to the canvas height so the knob travels the full range */
+    /* the pads match the canvas height exactly, so the knob travels the full range
+       and the crocodile reaches top and bottom without going off screen */
     ["padL","padR"].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.style.height = Math.floor(h) + "px";
+      if (el){ el.style.height = h + "px"; el.style.maxHeight = "none"; }
     });
     document.querySelectorAll(".padLabel").forEach(el => {
-      el.style.height = Math.floor(h) + "px";
+      el.style.height = h + "px"; el.style.maxHeight = "none";
     });
   } catch(e){}
 }
 window.addEventListener("resize", enforceCanvasSize);
-window.addEventListener("orientationchange", () => setTimeout(enforceCanvasSize, 150));
-setTimeout(enforceCanvasSize, 60);
-setTimeout(enforceCanvasSize, 400);
+window.addEventListener("orientationchange", () => { setTimeout(enforceCanvasSize, 150); setTimeout(enforceCanvasSize, 500); });
+[0, 60, 200, 400, 800, 1500].forEach(ms => setTimeout(enforceCanvasSize, ms));
+/* re-check for the first few seconds of play, since mobile browsers resize their
+   toolbars as you scroll and can change the available height */
+let enfN = 0;
+const enfTimer = setInterval(() => { enforceCanvasSize(); if (++enfN > 20) clearInterval(enfTimer); }, 500);
 let last = performance.now();
 function loop(now){
   let dt = (now - last) / 16.6667; last = now;
