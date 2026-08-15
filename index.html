@@ -367,6 +367,17 @@
     display:flex;flex-direction:column;align-items:stretch;gap:10px;
     width:100%;max-width:520px;
   }
+  #rotHead{text-align:center;margin-bottom:2px;}
+  #rotHead .rotName{
+    font-family:"Courier New",monospace;font-weight:bold;
+    font-size:30px;letter-spacing:2px;color:#ffcf3f;
+    text-shadow:0 2px 6px rgba(0,0,0,.7);line-height:1.1;
+  }
+  #rotHead .rotMission{
+    font-family:"Courier New",monospace;font-weight:bold;
+    font-size:16px;letter-spacing:2px;color:#ffffff;margin-top:3px;
+    text-shadow:0 2px 5px rgba(0,0,0,.7);
+  }
   #demo{
     display:block;width:100%;height:auto;aspect-ratio:16 / 10;
     border:3px solid #6b4a1f;border-radius:8px;background:#0a3d5c;
@@ -435,7 +446,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b20</div>
+  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b21</div>
 </div>
 
 <div id="phoneMenu">
@@ -485,6 +496,10 @@
 
 <div id="rotate">
   <div id="rotInner">
+    <div id="rotHead">
+      <div class="rotName">CROCODILE ARCHER</div>
+      <div class="rotMission">DEFEND THE SWAMP</div>
+    </div>
     <canvas id="demo" width="420" height="300"></canvas>
     <a id="rotAd" target="_blank" rel="noopener"></a>
     <button id="rotNew">NEW GAME</button>
@@ -3270,15 +3285,6 @@ setInterval(() => {
       g.fillStyle = "#c9382c"; g.beginPath(); g.moveTo(-24, 0); g.lineTo(-16, -5); g.lineTo(-12, 0); g.closePath(); g.fill();
       g.restore();
     }
-
-    /* the game name and mission, across the top */
-    g.textAlign = "center";
-    g.save(); g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = 8 * S;
-    g.fillStyle = "#c9a227"; g.font = "bold " + Math.round(30 * S) + "px 'Courier New', monospace";
-    g.fillText("CROCODILE ARCHER", DW/2, 32 * S);
-    g.restore();
-    g.fillStyle = "#2f6c30"; g.font = "bold " + Math.round(12 * S) + "px 'Courier New', monospace";
-    g.fillText("MISSION - DEFEND THE SWAMP", DW/2, 50 * S);
 
     requestAnimationFrame(frame);
   }
