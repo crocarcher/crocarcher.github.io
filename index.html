@@ -19,23 +19,142 @@
     height:100%;
     background:#0b1a12;
     background-image:radial-gradient(circle at 50% 0%, #17301f 0%, #0b1a12 55%, #050d08 100%);
-    display:flex;align-items:center;justify-content:center;
     font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif;
     overflow:hidden;-webkit-tap-highlight-color:transparent;
+    color:#dce8dd;
   }
-  #shell{position:relative;width:min(96vw,168vh);max-width:1040px;padding:10px;}
-  #frame{position:relative;border:6px solid #6b4a1f;border-radius:10px;
+  #app{
+    height:100%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:8px;padding:8px;
+  }
+
+  /* ---------- the control bar, always outside the playfield ---------- */
+  #bar{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;
+    width:100%;max-width:1040px;
+  }
+  #bar .brand{
+    font-family:"Courier New",monospace;color:#c9a227;font-size:14px;
+    letter-spacing:2px;margin-right:auto;white-space:nowrap;
+  }
+  .btn{
+    font-family:"Courier New",monospace;font-size:12px;letter-spacing:1px;
+    color:#e9f5ec;background:rgba(8,22,16,.75);
+    border:2px solid #6b4a1f;border-radius:6px;
+    padding:8px 12px;cursor:pointer;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:6px;
+    transition:border-color .15s,background .15s;
+  }
+  .btn:hover{border-color:#c9a227;background:rgba(20,44,30,.9);}
+  .btn:active{transform:scale(.97);}
+  .btn.on{border-color:#c9a227;color:#ffd45e;}
+  .btn[disabled]{opacity:.35;cursor:default;}
+  .btn svg{width:14px;height:14px;fill:currentColor;}
+
+  /* ---------- the playfield and the two touch pads beside it ---------- */
+  #stage{display:flex;align-items:stretch;gap:8px;width:100%;justify-content:center;min-height:0;}
+  #frame{
+    position:relative;border:6px solid #6b4a1f;border-radius:10px;
     box-shadow:0 0 0 3px #2b1c0a,0 18px 50px rgba(0,0,0,.75),inset 0 0 0 2px #a5772f;
-    overflow:hidden;background:#000;}
-  canvas{display:block;width:100%;height:auto;cursor:none;touch-action:none;}
-  #tag{text-align:center;color:#7d9a82;font-size:12px;letter-spacing:2px;margin-top:8px;text-transform:uppercase;}
+    overflow:hidden;background:#000;flex:0 1 auto;min-width:0;
+  }
+  canvas{display:block;width:100%;height:auto;max-height:100%;touch-action:none;}
+  body.mouseMode canvas{cursor:none;}
+  canvas{cursor:default;}
+  body.keyMode canvas{cursor:default;}
+
+  #padL,#padR{display:none;}
+  body.touch #padL,body.touch #padR{display:flex;}
+
+  #padL{
+    width:64px;flex:0 0 64px;
+    border:2px solid #6b4a1f;border-radius:10px;
+    background:rgba(8,22,16,.6);
+    position:relative;touch-action:none;
+    align-items:center;justify-content:center;
+  }
+  #knob{
+    position:absolute;left:50%;transform:translate(-50%,-50%);
+    width:44px;height:44px;border-radius:50%;
+    background:#c9a227;border:3px solid #6b4a1f;pointer-events:none;
+  }
+  #padL .hint{
+    font-family:"Courier New",monospace;font-size:10px;color:#5e7a63;
+    writing-mode:vertical-rl;letter-spacing:2px;pointer-events:none;
+  }
+  #padR{
+    width:104px;flex:0 0 104px;
+    border:2px solid #6b4a1f;border-radius:10px;
+    background:rgba(8,22,16,.6);
+    align-items:center;justify-content:center;
+    touch-action:none;user-select:none;cursor:pointer;
+  }
+  #padR .ring{
+    width:84px;height:84px;border-radius:50%;
+    border:4px solid #c9a227;background:rgba(201,162,39,.14);
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Courier New",monospace;font-size:13px;color:#ffd45e;letter-spacing:1px;
+    transition:background .08s,transform .08s;
+  }
+  #padR.hit .ring{background:rgba(201,162,39,.55);transform:scale(.94);}
+
+  #tag{
+    text-align:center;color:#7d9a82;font-size:11px;letter-spacing:2px;
+    text-transform:uppercase;line-height:1.7;
+  }
   #tag b{color:#c9a227;}
+
+  /* ---------- a phone held sideways ---------- */
+  @media (orientation:landscape) and (max-height:560px){
+    #app{gap:5px;padding:4px;}
+    #bar .brand{display:none;}
+    .btn{padding:6px 9px;font-size:11px;}
+    #tag{display:none;}
+    #frame{border-width:3px;border-radius:6px;}
+    canvas{max-height:calc(100dvh - 76px);width:auto;}
+    #padL{width:52px;flex:0 0 52px;}
+    #padR{width:84px;flex:0 0 84px;}
+    #padR .ring{width:68px;height:68px;font-size:11px;}
+    #knob{width:38px;height:38px;}
+  }
+  @media (orientation:portrait){
+    body.touch #rotate{display:flex;}
+  }
+  #rotate{
+    display:none;position:fixed;inset:0;z-index:50;
+    background:#0b1a12;flex-direction:column;
+    align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;
+  }
+  #rotate .big{font-family:"Courier New",monospace;color:#c9a227;font-size:20px;letter-spacing:2px;}
+  #rotate .sub{color:#7d9a82;font-size:13px;}
 </style>
 </head>
 <body>
-<div id="shell">
-  <div id="frame"><canvas id="game" width="960" height="600"></canvas></div>
-  <div id="tag">One life per stage</div>
+<div id="app">
+
+  <div id="bar">
+    <span class="brand">CROC ARCHER</span>
+    <button class="btn" id="bNew" title="Start again from stage one">NEW GAME</button>
+    <button class="btn" id="bPause" title="Pause">PAUSE</button>
+    <button class="btn" id="bAbort" title="Give up this run">ABORT</button>
+    <button class="btn on" id="bSound" title="Game sound">
+      <svg id="sndIcon" viewBox="0 0 24 24"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>
+      <span id="sndLabel">SOUND ON</span>
+    </button>
+  </div>
+
+  <div id="stage">
+    <div id="padL"><span class="hint">AIM</span><div id="knob"></div></div>
+    <div id="frame"><canvas id="game" width="960" height="600"></canvas></div>
+    <div id="padR"><div class="ring">FIRE</div></div>
+  </div>
+
+  <div id="tag"></div>
+</div>
+
+<div id="rotate">
+  <div class="big">TURN YOUR PHONE SIDEWAYS</div>
+  <div class="sub">Croc Archer is played in landscape.</div>
 </div>
 
 <script>
@@ -95,50 +214,50 @@ const SIZE = { chickenBalloon:0.74, eggBalloon:0.74, bag:0.50, shark:0.74,
                whale:0.66, sub:0.70, bomber:0.70, hammer:0.74, ray:0.76, board:1 };
 let intro = 0;
 const TOUCH = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
-let touchAimId = null;      /* the finger steering the archer */
-let fireBtn = { x: 0, y: 0, r: 0, lit: 0 };
+let inputMode = TOUCH ? "touch" : null;   /* null until the player picks on desktop */
+let aimY = 300;                            /* the height the archer is heading for */
+let keyTarget = 300;
+const modeBtns = [
+  { mode:"mouse", label:"MOUSE",    x:352, y:412, w:170, h:36 },
+  { mode:"keys",  label:"KEYBOARD", x:542, y:412, w:170, h:36 }
+];
 
 /* ---------- input ---------- */
 const mouse = { x: 700, y: 300 };
+let pointerInside = false;
 function toCanvas(cx, cy){
   const r = cv.getBoundingClientRect();
   return { x:(cx - r.left) * (W / r.width), y:(cy - r.top) * (H / r.height) };
 }
 cv.addEventListener("mousemove", e => { const p = toCanvas(e.clientX, e.clientY); mouse.x = p.x; mouse.y = p.y; });
-cv.addEventListener("mousedown", e => { if (TOUCH) return; e.preventDefault(); const p = toCanvas(e.clientX, e.clientY); mouse.x = p.x; mouse.y = p.y; act(); });
-cv.addEventListener("contextmenu", e => e.preventDefault());
-function inFire(p){
-  return Math.hypot(p.x - fireBtn.x, p.y - fireBtn.y) < fireBtn.r * 1.25;
-}
-
-cv.addEventListener("touchstart", e => {
+cv.addEventListener("mousedown", e => {
+  if (TOUCH) return;
   e.preventDefault();
-  for (const t of e.changedTouches){
-    const p = toCanvas(t.clientX, t.clientY);
-    if (state !== "play"){ act(); return; }
-    if (inFire(p)){ fireBtn.lit = 9; fire(); }
-    else { touchAimId = t.identifier; mouse.x = p.x; mouse.y = p.y; }
-  }
-}, {passive:false});
-
-cv.addEventListener("touchmove", e => {
-  e.preventDefault();
-  for (const t of e.changedTouches){
-    if (t.identifier === touchAimId){
-      const p = toCanvas(t.clientX, t.clientY);
-      mouse.x = p.x; mouse.y = p.y;
+  const p = toCanvas(e.clientX, e.clientY);
+  mouse.x = p.x; mouse.y = p.y;
+  if (state === "title"){
+    for (const bt of modeBtns){
+      if (p.x > bt.x && p.x < bt.x + bt.w && p.y > bt.y && p.y < bt.y + bt.h){
+        setMode(bt.mode);
+        return;
+      }
     }
+    if (!inputMode) return;
   }
-}, {passive:false});
+  act();
+});
 
-cv.addEventListener("touchend", e => {
-  e.preventDefault();
-  for (const t of e.changedTouches) if (t.identifier === touchAimId) touchAimId = null;
-}, {passive:false});
-cv.addEventListener("touchcancel", e => {
-  for (const t of e.changedTouches) if (t.identifier === touchAimId) touchAimId = null;
-}, {passive:false});
-
+function setMode(m){
+  inputMode = m;
+  document.body.classList.remove("mouseMode","keyMode");
+  document.body.classList.add(m === "keys" ? "keyMode" : "mouseMode");
+  const el = document.getElementById("tag");
+  if (el) el.innerHTML = m === "keys"
+    ? 'Up and down arrows move the archer <b>&middot;</b> Spacebar shoots <b>&middot;</b> P pause <b>&middot;</b> R restart stage'
+    : 'Move the mouse up and down <b>&middot;</b> Click to loose an arrow <b>&middot;</b> P pause <b>&middot;</b> R restart stage';
+  tone(660, 0.08, "square", 0.06);
+}
+cv.addEventListener("contextmenu", e => e.preventDefault());
 const keys = {};
 window.addEventListener("keydown", e => {
   keys[e.code] = true;
@@ -151,7 +270,10 @@ window.addEventListener("keydown", e => {
 window.addEventListener("keyup", e => { keys[e.code] = false; });
 
 function act(){
-  if (state === "title"){ startLevel(0); return; }
+  if (state === "title"){
+    if (!inputMode) return;          /* pick mouse or keyboard first */
+    startLevel(0); return;
+  }
   if (state === "note"){ advance(); return; }
   if (state === "dead"){ score = noteData ? noteData.scoreAtStart : 0; startLevel(levelIndex); return; }
   if (state === "win"){ state = "title"; return; }
@@ -276,6 +398,7 @@ function startLevel(i){
   croc.hp = 1; croc.maxHp = 1; croc.hurt = 0; croc.invuln = 0; croc.cool = 0; croc.recoil = 0;
   croc.env = L.env;
   croc.minY = 118; croc.maxY = 580; croc.y = 430;
+  keyTarget = croc.y; aimY = croc.y;
   intro = 108;
   for (let k = 0; k < (L.env === "sky" ? 6 : 40); k++){
     if (L.env === "sky") deco.push({ x:rnd(0,W), y:rnd(40,190), s:rnd(0.6,1.5), v:rnd(0.08,0.25) });
@@ -390,10 +513,21 @@ function update(dt){
   const sky = L.env === "sky";
 
   /* the archer rides the cursor up and down, keys work too */
-  let want = mouse.y - BOW_DY;   /* the bow sits exactly on the cursor */
-  if (keys["KeyW"] || keys["ArrowUp"]) want = croc.y - 6 * dt;
-  if (keys["KeyS"] || keys["ArrowDown"]) want = croc.y + 6 * dt;
-  croc.y += (Math.max(croc.minY, Math.min(croc.maxY, want)) - croc.y) * Math.min(1, 0.45 * dt);
+  let want;
+  if (inputMode === "touch"){
+    want = aimY;
+  } else if (inputMode === "keys"){
+    const sp = 7.2;
+    if (keys["KeyW"] || keys["ArrowUp"])   keyTarget -= sp * dt;
+    if (keys["KeyS"] || keys["ArrowDown"]) keyTarget += sp * dt;
+    keyTarget = Math.max(croc.minY, Math.min(croc.maxY, keyTarget));
+    want = keyTarget;
+  } else {
+    want = mouse.y - BOW_DY;   /* the bow sits exactly on the cursor */
+    if (keys["KeyW"] || keys["ArrowUp"])   want = croc.y - 6 * dt;
+    if (keys["KeyS"] || keys["ArrowDown"]) want = croc.y + 6 * dt;
+  }
+  croc.y += (Math.max(croc.minY, Math.min(croc.maxY, want)) - croc.y) * Math.min(1, (inputMode === "keys" ? 0.7 : 0.45) * dt);
 
   if (croc.cool > 0)   croc.cool   = Math.max(0, croc.cool - dt);
   if (score > hiScore) hiScore = score;
@@ -1488,7 +1622,7 @@ function drawHUD(){
   }
 
   /* cursor */
-  if (!TOUCH){
+  if (inputMode === "mouse"){
   ctx.strokeStyle = sky ? "rgba(10,20,28,0.72)" : "rgba(255,255,255,0.5)"; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(mouse.x-13,mouse.y); ctx.lineTo(mouse.x-5,mouse.y);
   ctx.moveTo(mouse.x+5,mouse.y); ctx.lineTo(mouse.x+13,mouse.y);
@@ -1533,8 +1667,6 @@ function drawHUD(){
     }
   }
 
-  if (TOUCH && !paused && intro <= 0) drawTouchPads();
-
   if (paused){
     ctx.fillStyle = "rgba(0,0,0,0.66)"; ctx.fillRect(0,0,W,H);
     ctx.fillStyle = "#c9a227"; ctx.font = "bold 44px 'Courier New', monospace"; ctx.textAlign = "center";
@@ -1543,58 +1675,6 @@ function drawHUD(){
     ctx.fillText("PRESS P TO RETURN TO THE SWAMP", W/2, H/2+34);
   }
 }
-function drawTouchPads(){
-  fireBtn.x = W - 92; fireBtn.y = H - 92; fireBtn.r = 52;
-  if (fireBtn.lit > 0) fireBtn.lit -= 1;
-
-  /* the fire pad */
-  const lit = fireBtn.lit > 0;
-  const ready = croc.cool <= 0 && arrows > 0;
-  ctx.save();
-  ctx.globalAlpha = lit ? 0.95 : 0.62;
-  ctx.fillStyle = lit ? "rgba(201,162,39,0.55)" : "rgba(8,22,16,0.55)";
-  ctx.beginPath(); ctx.arc(fireBtn.x, fireBtn.y, fireBtn.r, 0, 6.29); ctx.fill();
-  ctx.strokeStyle = ready ? "#c9a227" : "rgba(201,162,39,0.35)";
-  ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(fireBtn.x, fireBtn.y, fireBtn.r, 0, 6.29); ctx.stroke();
-  /* an arrow glyph inside */
-  ctx.strokeStyle = ready ? "#f4f4e8" : "rgba(244,244,232,0.4)"; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(fireBtn.x - 22, fireBtn.y); ctx.lineTo(fireBtn.x + 10, fireBtn.y); ctx.stroke();
-  ctx.fillStyle = ready ? "#f4f4e8" : "rgba(244,244,232,0.4)";
-  ctx.beginPath(); ctx.moveTo(fireBtn.x + 24, fireBtn.y); ctx.lineTo(fireBtn.x + 8, fireBtn.y - 10);
-  ctx.lineTo(fireBtn.x + 8, fireBtn.y + 10); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = ready ? "#c9382c" : "rgba(201,56,44,0.4)";
-  ctx.beginPath(); ctx.moveTo(fireBtn.x - 22, fireBtn.y); ctx.lineTo(fireBtn.x - 12, fireBtn.y - 9);
-  ctx.lineTo(fireBtn.x - 8, fireBtn.y); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(fireBtn.x - 22, fireBtn.y); ctx.lineTo(fireBtn.x - 12, fireBtn.y + 9);
-  ctx.lineTo(fireBtn.x - 8, fireBtn.y); ctx.closePath(); ctx.fill();
-  ctx.restore();
-
-  ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(244,244,232,0.6)"; ctx.font = "bold 11px 'Courier New', monospace";
-  ctx.fillText("FIRE", fireBtn.x, fireBtn.y + fireBtn.r + 16);
-
-  /* the aim strip down the left, so it is obvious where to slide */
-  const ax = 30, top = 150, bot = H - 60;
-  ctx.save();
-  ctx.globalAlpha = touchAimId !== null ? 0.55 : 0.28;
-  ctx.fillStyle = "rgba(8,22,16,0.5)";
-  if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(ax - 16, top, 32, bot - top, 16); ctx.fill(); }
-  else ctx.fillRect(ax - 16, top, 32, bot - top);
-  ctx.strokeStyle = "rgba(201,162,39,0.5)"; ctx.lineWidth = 2;
-  if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(ax - 16, top, 32, bot - top, 16); ctx.stroke(); }
-  ctx.fillStyle = "rgba(244,244,232,0.75)";
-  const ky = Math.max(top + 16, Math.min(bot - 16, bowY()));
-  ctx.beginPath(); ctx.arc(ax, ky, 11, 0, 6.29); ctx.fill();
-  ctx.strokeStyle = "rgba(244,244,232,0.5)"; ctx.lineWidth = 2;
-  for (const dy of [-1, 1]){
-    ctx.beginPath();
-    ctx.moveTo(ax - 6, ky + dy * 26); ctx.lineTo(ax, ky + dy * 34); ctx.lineTo(ax + 6, ky + dy * 26);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
 function pad(n,w){ let t = String(Math.max(0,Math.floor(n))); while (t.length < w) t = "0" + t; return t; }
 
 function heart(x,y,full){
@@ -1632,15 +1712,23 @@ function drawTitle(){
   panel(318, 182, 608, 206, 0);
   ctx.fillStyle = "#e9f5ec"; ctx.font = "bold 15px 'Courier New', monospace"; ctx.textAlign = "left";
   const lines = TOUCH ? [
-    "TURN YOUR PHONE SIDEWAYS.",
-    "SLIDE A FINGER UP AND DOWN THE LEFT TO AIM.",
+    "SLIDE THE PAD ON THE LEFT TO AIM.",
     "TAP THE FIRE PAD ON THE RIGHT TO SHOOT.",
     "",
+    "THE ARROW FLIES STRAIGHT, SO LINE UP AND TIME IT.",
     "ONE ARROW CAN TAKE A WHOLE LINE OF BALLOONS OR BAGS.",
     "IN THE CHANNEL, ONE ARROW KILLS ANYTHING.",
     "",
-    "ONE LIFE.  IF THEY REACH YOU, THE STAGE IS OVER.",
-    "DO NOT RUN OUT OF ARROWS."
+    "ONE LIFE.  IF THEY REACH YOU, THE STAGE IS OVER."
+  ] : (inputMode === "keys" ? [
+    "UP AND DOWN ARROWS, OR W AND S, MOVE THE ARCHER.",
+    "SPACEBAR LOOSES AN ARROW.",
+    "",
+    "THE ARROW FLIES STRAIGHT, SO LINE UP AND TIME IT.",
+    "ONE ARROW CAN TAKE A WHOLE LINE OF BALLOONS OR BAGS.",
+    "IN THE CHANNEL, ONE ARROW KILLS ANYTHING.",
+    "",
+    "ONE LIFE.  IF THEY REACH YOU, THE STAGE IS OVER."
   ] : [
     "MOVE THE MOUSE UP AND DOWN.  CLICK TO SHOOT.",
     "THE ARROW FLIES STRAIGHT, SO LINE UP AND TIME IT.",
@@ -1650,39 +1738,31 @@ function drawTitle(){
     "",
     "ONE LIFE.  IF THEY REACH YOU, THE STAGE IS OVER.",
     "DO NOT RUN OUT OF ARROWS."
-  ];
+  ]);
   lines.forEach((t,i) => ctx.fillText(t, 344, 210 + i * 23));
 
-  /* the archer himself, big, drawn over the wash so he is the first thing you see */
-  const sx = croc.x, sy = croc.y, se = croc.env, sc = croc.cool;
-  croc.x = 0; croc.y = 0; croc.env = "sky";
-  const cyc = time % 150;
-  croc.cool = cyc < COOL ? (COOL - cyc) : 0;
-  ctx.save(); ctx.translate(150, 556); ctx.scale(2.05, 2.05); drawCroc(); ctx.restore();
-  croc.x = sx; croc.y = sy; croc.env = se; croc.cool = sc;
-
-  /* the arrow he just loosed */
-  if (cyc > COOL && cyc < 130){
-    const ax = 150 + 40 * 2.05 + (cyc - COOL) * 8.4, ay = 556 - 74 * SC * 2.05;
-    ctx.save(); ctx.translate(ax, ay); ctx.scale(1.5, 1.5);
-    ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(-46,0); ctx.lineTo(-28,0); ctx.stroke();
-    ctx.strokeStyle = "#e8d9b0"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(-26,0); ctx.lineTo(11,0); ctx.stroke();
-    ctx.fillStyle = "#d8dee3";
-    ctx.beginPath(); ctx.moveTo(19,0); ctx.lineTo(9,-5); ctx.lineTo(9,5); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#c9382c";
-    ctx.beginPath(); ctx.moveTo(-26,0); ctx.lineTo(-18,-6); ctx.lineTo(-15,0); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(-26,0); ctx.lineTo(-18,6); ctx.lineTo(-15,0); ctx.closePath(); ctx.fill();
-    ctx.restore();
+  /* on a desktop the player picks how they want to play before anything starts */
+  if (!TOUCH){
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#9fe870"; ctx.font = "bold 13px 'Courier New', monospace";
+    ctx.fillText("HOW DO YOU WANT TO PLAY", 622, 400);
+    modeBtns.forEach(bt => {
+      const on = inputMode === bt.mode;
+      ctx.fillStyle = on ? "rgba(201,162,39,0.9)" : "rgba(8,22,16,0.8)";
+      ctx.strokeStyle = on ? "#ffd45e" : "#6b4a1f"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.rect(bt.x, bt.y, bt.w, bt.h); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = on ? "#0b1a12" : "#e9f5ec";
+      ctx.font = "bold 14px 'Courier New', monospace";
+      ctx.fillText(bt.label, bt.x + bt.w/2, bt.y + 24);
+    });
   }
 
   ctx.textAlign = "center";
   ctx.fillStyle = Math.floor(time/30)%2 ? "#ffd45e" : "#fff";
   ctx.font = "bold 21px 'Courier New', monospace";
-  ctx.fillText(TOUCH ? "TAP TO DEFEND THE SWAMP" : "PRESS FIRE TO DEFEND THE SWAMP", W/2, 428);
+  if (TOUCH || inputMode) ctx.fillText(TOUCH ? "TAP TO DEFEND THE SWAMP" : "PRESS FIRE TO DEFEND THE SWAMP", W/2, 478);
   ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.font = "12px 'Courier New', monospace";
-  ctx.fillText("(C) 1987  ECOWISDOM KNOWLEDGE VENTURES   1 PLAYER ONLY", W/2, 578);
+  ctx.fillText("(C) 1987  ECOWISDOM KNOWLEDGE VENTURES   1 PLAYER ONLY", W/2, 556);
 }
 
 function drawNote(){
@@ -1973,6 +2053,93 @@ function render(){
   el.innerHTML = TOUCH
     ? 'Turn sideways <b>&middot;</b> Slide the left edge to aim <b>&middot;</b> Tap FIRE to shoot <b>&middot;</b> One life per stage'
     : 'Move the mouse up and down <b>&middot;</b> Click to loose an arrow <b>&middot;</b> P pause <b>&middot;</b> R restart <b>&middot;</b> M sound';
+})();
+
+/* ============================================================
+   CONTROLS OUTSIDE THE PLAYFIELD
+   ============================================================ */
+const $ = id => document.getElementById(id);
+
+/* the aim pad down the left */
+(function(){
+  const pad = $("padL"), knob = $("knob");
+  if (!pad) return;
+  let id = null;
+  const setFromY = cy => {
+    const r = pad.getBoundingClientRect();
+    const f = Math.max(0, Math.min(1, (cy - r.top) / r.height));
+    aimY = croc.minY + (croc.maxY - croc.minY) * f;
+    knob.style.top = (f * 100) + "%";
+  };
+  pad.addEventListener("touchstart", e => {
+    e.preventDefault();
+    const t = e.changedTouches[0]; id = t.identifier; setFromY(t.clientY);
+  }, {passive:false});
+  pad.addEventListener("touchmove", e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) if (t.identifier === id) setFromY(t.clientY);
+  }, {passive:false});
+  pad.addEventListener("touchend", e => {
+    for (const t of e.changedTouches) if (t.identifier === id) id = null;
+  });
+  pad.addEventListener("mousedown", e => { setFromY(e.clientY); id = "m"; });
+  window.addEventListener("mousemove", e => { if (id === "m") setFromY(e.clientY); });
+  window.addEventListener("mouseup", () => { if (id === "m") id = null; });
+})();
+
+/* the fire pad on the right */
+(function(){
+  const pad = $("padR");
+  if (!pad) return;
+  const hit = e => {
+    e.preventDefault();
+    pad.classList.add("hit");
+    setTimeout(() => pad.classList.remove("hit"), 90);
+    act();
+  };
+  pad.addEventListener("touchstart", hit, {passive:false});
+  pad.addEventListener("mousedown", hit);
+})();
+
+/* the bar */
+function syncBar(){
+  const p = $("bPause"), a = $("bAbort");
+  if (p){
+    p.textContent = paused ? "RESUME" : "PAUSE";
+    p.disabled = state !== "play";
+    p.classList.toggle("on", paused);
+  }
+  if (a) a.disabled = (state === "title");
+}
+if ($("bNew")) $("bNew").addEventListener("click", () => {
+  score = 0; hiScore = Math.max(hiScore, score);
+  startLevel(0); paused = false; syncBar();
+});
+if ($("bPause")) $("bPause").addEventListener("click", () => {
+  if (state === "play"){ paused = !paused; syncBar(); }
+});
+if ($("bAbort")) $("bAbort").addEventListener("click", () => {
+  if (state === "title") return;
+  paused = false; state = "title"; syncBar();
+});
+if ($("bSound")) $("bSound").addEventListener("click", () => {
+  muted = !muted;
+  $("bSound").classList.toggle("on", !muted);
+  $("sndLabel").textContent = muted ? "SOUND OFF" : "SOUND ON";
+  $("sndIcon").innerHTML = muted
+    ? '<path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M19 9l-4 6M15 9l4 6" stroke="currentColor" stroke-width="2" fill="none"/>'
+    : '<path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/>';
+});
+
+/* the caption */
+(function(){
+  const el = $("tag");
+  if (!el) return;
+  el.innerHTML = TOUCH
+    ? 'Slide the pad on the left to aim <b>&middot;</b> Tap FIRE to shoot'
+    : 'Choose mouse or keyboard on the title screen <b>&middot;</b> P pause <b>&middot;</b> R restart stage';
+  document.body.classList.toggle("touch", TOUCH);
+  document.body.classList.add(TOUCH ? "touchMode" : "mouseMode");
 })();
 
 let last = performance.now();
