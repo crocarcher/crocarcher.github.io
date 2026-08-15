@@ -68,6 +68,63 @@
   body.touch #padL{display:flex !important;}
   body.touch #padR{display:flex !important;}
   body.touch .padLabel{display:flex !important;}
+
+  /* ---- phone-only controls: top ad, single pause button, pause menu ---- */
+  #phoneAd, #phonePause, #phoneMenu{display:none;}
+
+  /* the single pause button sits low in the right column, clear of the FIRE circle */
+  #phonePause{
+    margin-top:auto;margin-bottom:6px;
+    width:34px;height:34px;border-radius:8px;
+    background:rgba(8,22,16,.85);border:2px solid #6b4a1f;color:#ffd45e;
+    font-family:"Courier New",monospace;font-size:14px;font-weight:bold;
+    cursor:pointer;flex:0 0 auto;letter-spacing:1px;
+  }
+  #phonePause:active{transform:scale(.94);}
+  body.touch #padR{flex-direction:column;justify-content:space-between;}
+
+  /* the thin rotating ad across the top, only during phone play */
+  #phoneAd{
+    width:100%;flex:0 0 auto;
+    align-items:center;gap:8px;
+    border:2px solid #c9a227;border-radius:6px;
+    background:rgba(8,22,16,.8);padding:3px 8px;
+    text-decoration:none;overflow:hidden;
+    animation:slotGlow 10s ease-in-out infinite;
+  }
+  #phoneAd .pa-logo{width:26px;height:26px;flex:0 0 26px;border-radius:5px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    font-family:"Courier New",monospace;font-size:11px;color:#fff;font-weight:bold;}
+  #phoneAd .pa-logo img{width:100%;height:100%;object-fit:cover;}
+  #phoneAd .pa-txt{flex:1;min-width:0;font-family:"Courier New",monospace;
+    font-size:10px;color:#ffd45e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:bold;}
+  #phoneAd .pa-go{flex:0 0 auto;font-family:"Courier New",monospace;font-size:10px;
+    padding:4px 9px;border-radius:3px;font-weight:bold;white-space:nowrap;
+    animation:btnFlash 2s steps(1) infinite;text-decoration:none;}
+
+  /* the phone pause menu */
+  #phoneMenu{
+    position:fixed;inset:0;z-index:45;
+    background:rgba(4,12,8,.9);
+    align-items:center;justify-content:center;
+  }
+  #phoneMenu.show{display:flex;}
+  #phoneMenu .pmCard{
+    background:linear-gradient(180deg,#f4e6c4 0%,#e8d5a8 55%,#d9c08a 100%);
+    border:3px solid #8a6a2f;border-radius:10px;padding:16px 20px;text-align:center;
+    display:flex;flex-direction:column;gap:8px;min-width:220px;
+  }
+  #phoneMenu .pmTitle{font-family:"Courier New",monospace;font-size:20px;color:#7b1f14;
+    letter-spacing:2px;font-weight:bold;margin-bottom:4px;}
+  #phoneMenu .pmBtn{
+    font-family:"Courier New",monospace;font-size:14px;letter-spacing:1px;
+    padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:bold;
+    background:#fbf3dd;border:2px solid #8a6a2f;color:#3b2a12;
+  }
+  #phoneMenu .pmBtn:active{transform:scale(.97);}
+  #phoneMenu #pmResume{background:rgba(201,162,39,.45);color:#7b1f14;border-color:#7b1f14;}
+
+  body.touch #phonePause{display:flex;align-items:center;justify-content:center;}
   .padLabel{
     flex-direction:column;align-items:center;justify-content:center;
     flex:0 0 34px;gap:6px;padding:0 2px;
@@ -131,12 +188,10 @@
 
   /* ---------- a phone held sideways ---------- */
   @media (orientation:landscape) and (max-height:700px){
-    #app{gap:2px;padding:2px;justify-content:center;height:100dvh;max-height:100dvh;overflow:hidden;}
-    #bar{gap:3px;padding:0;flex-wrap:nowrap;justify-content:center;flex:0 0 auto;}
-    #bar .brand{display:none;}
-    .btn{padding:2px 5px;font-size:8px;letter-spacing:0;border-width:1px;gap:3px;}
-    .btn .bl{font-size:8px;}
-    #bSound svg{width:9px;height:9px;}
+    #app{gap:2px;padding:2px;justify-content:flex-start;height:100dvh;max-height:100dvh;overflow:hidden;}
+    /* the four-button bar is replaced on phone by the single pause button + top ad */
+    #bar{display:none;}
+    body.touch #phoneAd{display:flex;}
     #tag{display:none;}
     #promoStrip{display:none;}
     #frame{border-width:2px;border-radius:5px;flex:0 0 auto;}
@@ -325,6 +380,8 @@
 <body>
 <div id="app">
 
+  <a id="phoneAd" target="_blank" rel="noopener"></a>
+
   <div id="bar">
     <span class="brand">CROC ARCHER</span>
     <button class="btn" id="bNew" title="Start again from stage one"><span class="bl">NEW GAME</span></button>
@@ -341,12 +398,22 @@
     <div id="labL" class="padLabel"><span class="arrow left">&#9664;</span><span class="w">MOVE</span><span class="w">THIS</span><span class="w">TO</span><span class="w">AIM</span></div>
     <div id="frame"><canvas id="game" width="960" height="600"></canvas></div>
     <div id="labR" class="padLabel"><span class="w">PRESS</span><span class="w">TO</span><span class="w">FIRE</span><span class="arrow">&#9654;</span></div>
-    <div id="padR"><div class="ring">FIRE</div></div>
+    <div id="padR"><div class="ring">FIRE</div><button id="phonePause" aria-label="Pause">II</button></div>
   </div>
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b16</div>
+  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b17</div>
+</div>
+
+<div id="phoneMenu">
+  <div class="pmCard">
+    <div class="pmTitle">PAUSED</div>
+    <button class="pmBtn" id="pmResume">RESUME GAME</button>
+    <button class="pmBtn" id="pmSound">SOUND: ON</button>
+    <button class="pmBtn" id="pmNew">NEW GAME</button>
+    <button class="pmBtn" id="pmAbort">ABORT GAME</button>
+  </div>
 </div>
 
 <div id="over">
@@ -2286,7 +2353,7 @@ function drawLoading(){
     ctx.fillText(line, cx + 20, cy + 55);
     ctx.textAlign = "right";
     ctx.fillStyle = "rgba(233,245,236,0.6)"; ctx.font = "bold 11px 'Courier New', monospace";
-    ctx.fillText("LINK BELOW THE GAME", cx + cw - 18, cy + 38);
+    ctx.fillText("LINK ABOVE THE GAME", cx + cw - 18, cy + 38);
     ctx.textAlign = "center";
   }
 }
@@ -2694,6 +2761,66 @@ if ($("bSound")) $("bSound").addEventListener("click", () => {
     : '<path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/>';
 });
 
+/* ---------- phone: the single pause button and its menu ---------- */
+function setMuted(m){
+  muted = m;
+  try {
+    if ($("bSound")) $("bSound").classList.toggle("on", !muted);
+    if ($("sndLabel")) $("sndLabel").textContent = muted ? "SOUND OFF" : "SOUND ON";
+    const pm = $("pmSound"); if (pm) pm.textContent = muted ? "SOUND: OFF" : "SOUND: ON";
+    if ($("sndIcon")) $("sndIcon").innerHTML = muted
+      ? '<path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M19 9l-4 6M15 9l4 6" stroke="currentColor" stroke-width="2" fill="none"/>'
+      : '<path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/>';
+  } catch(e){}
+}
+function openPhoneMenu(){
+  if (state === "play"){ paused = true; }
+  const m = $("phoneMenu"); if (m) m.classList.add("show");
+  const pm = $("pmSound"); if (pm) pm.textContent = muted ? "SOUND: OFF" : "SOUND: ON";
+}
+function closePhoneMenu(){
+  const m = $("phoneMenu"); if (m) m.classList.remove("show");
+}
+if ($("phonePause")){
+  const pb = $("phonePause");
+  pb.addEventListener("touchstart", e => {
+    e.preventDefault(); e.stopPropagation();   /* do not let the fire pad see this */
+    openPhoneMenu();
+  }, {passive:false});
+  pb.addEventListener("click", e => {
+    e.preventDefault(); e.stopPropagation();
+    openPhoneMenu();
+  });
+}
+if ($("pmResume")) $("pmResume").addEventListener("click", () => {
+  closePhoneMenu();
+  if (state === "play") paused = false;
+});
+if ($("pmSound")) $("pmSound").addEventListener("click", () => { setMuted(!muted); });
+if ($("pmNew")) $("pmNew").addEventListener("click", () => { closePhoneMenu(); newRun(); });
+if ($("pmAbort")) $("pmAbort").addEventListener("click", () => {
+  closePhoneMenu();
+  paused = false;
+  if (!runEnded && score > 0){ state = "dead"; endRun("LOST"); }
+  else { state = "title"; hideOverlay(); }
+});
+
+/* ---------- phone: the thin rotating ad across the top ---------- */
+function paintPhoneAd(){
+  const el = $("phoneAd");
+  if (!el || !SHOW_PROMOS || !PROMOS.length) return;
+  const pr = PROMOS[promoIdx % PROMOS.length];
+  const initials = (pr.title || "?").replace(/[^A-Za-z\u0900-\u097F]/g, "").slice(0, 2).toUpperCase();
+  el.href = pr.url;
+  el.target = "_blank"; el.rel = "noopener";
+  el.innerHTML =
+    '<span class="pa-logo" style="background:' + pr.tint + '">' +
+      (pr.img ? '<img src="' + pr.img + '" alt="" onerror="this.style.display=\'none\';this.parentNode.textContent=\'' + initials + '\'">' : initials) +
+    '</span>' +
+    '<span class="pa-txt">' + escapeHtml(pr.head || pr.title) + '</span>' +
+    '<span class="pa-go">' + escapeHtml(pr.cta) + '</span>';
+}
+
 /* the caption */
 function refreshCaption(){
   const el = $("tag");
@@ -2921,6 +3048,7 @@ function paintStrip(){
   if (!SHOW_PROMOS || !PROMOS.length) return;
   const strip = $("promoStrip");
   if (strip) strip.innerHTML = promoBox(PROMOS[promoIdx % PROMOS.length], stripLine);
+  paintPhoneAd();
 }
 /* every 15 seconds the descriptive line under the current ad changes */
 setInterval(() => {
@@ -3026,8 +3154,11 @@ setInterval(() => {
 function enforceCanvasSize(){
   try {
     const cv = document.getElementById("game");
-    const bar = document.getElementById("bar");
     if (!cv) return;
+    /* on phone the top is the ad strip; on desktop it is the button bar */
+    const phoneAd = document.getElementById("phoneAd");
+    const bar = (phoneAd && getComputedStyle(phoneAd).display !== "none") ? phoneAd
+              : document.getElementById("bar");
 
     const vvh0 = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
     const landscape = window.innerWidth > window.innerHeight;
