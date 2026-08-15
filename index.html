@@ -62,8 +62,12 @@
   canvas{cursor:default;}
   body.playingMouse canvas{cursor:none;}
 
-  #padL,#padR,.padLabel{display:none;}
-  body.touch #padL,body.touch #padR,body.touch .padLabel{display:flex;}
+  /* pads and labels are HIDDEN by default and only appear in real touch mode.
+     !important so no later id-selector can accidentally reveal them on desktop. */
+  #padL,#padR,.padLabel{display:none !important;}
+  body.touch #padL{display:flex !important;}
+  body.touch #padR{display:flex !important;}
+  body.touch .padLabel{display:flex !important;}
   .padLabel{
     flex-direction:column;align-items:center;justify-content:center;
     flex:0 0 34px;gap:6px;padding:0 2px;
@@ -80,7 +84,7 @@
     border:2px solid #6b4a1f;border-radius:10px;
     background:rgba(8,22,16,.6);
     position:relative;touch-action:none;
-    display:flex;align-items:center;justify-content:center;
+    align-items:center;justify-content:center;
   }
   #knob{
     position:absolute;left:50%;transform:translate(-50%,-50%);
@@ -333,7 +337,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;bottom:6px;right:8px;font:bold 14px monospace;color:#c9a227;z-index:60;pointer-events:none;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:4px;">BUILD 13</div>
+  <div id="buildTag" style="position:fixed;bottom:6px;right:8px;font:bold 14px monospace;color:#c9a227;z-index:60;pointer-events:none;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:4px;">BUILD 14</div>
 </div>
 
 <div id="over">
@@ -3029,8 +3033,9 @@ function enforceCanvasSize(){
       return;
     }
 
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const vv = window.visualViewport;
+    const vw = (vv && vv.width) ? vv.width : window.innerWidth;
+    const vh = (vv && vv.height) ? vv.height : window.innerHeight;
     const barH = bar ? Math.ceil(bar.getBoundingClientRect().height) : 34;
 
     /* STEP 1: the whole 600px-tall rectangle MUST fit vertically first.
@@ -3046,6 +3051,10 @@ function enforceCanvasSize(){
     let h = availH;
     let w = h * ar;
     if (w > availW){ w = availW; h = w / ar; }   /* if too wide, shrink to width */
+
+    /* pin the app to the true visible height so nothing sits under the URL bar */
+    const app = document.getElementById("app");
+    if (app){ app.style.height = Math.floor(vh) + "px"; app.style.maxHeight = Math.floor(vh) + "px"; }
 
     w = Math.floor(w); h = Math.floor(h);
     cv.style.width = w + "px";
@@ -3065,6 +3074,10 @@ function enforceCanvasSize(){
   } catch(e){}
 }
 window.addEventListener("resize", enforceCanvasSize);
+if (window.visualViewport){
+  window.visualViewport.addEventListener("resize", enforceCanvasSize);
+  window.visualViewport.addEventListener("scroll", enforceCanvasSize);
+}
 window.addEventListener("orientationchange", () => { setTimeout(enforceCanvasSize, 150); setTimeout(enforceCanvasSize, 500); });
 [0, 60, 200, 400, 800, 1500].forEach(ms => setTimeout(enforceCanvasSize, ms));
 /* re-check for the first few seconds of play, since mobile browsers resize their
