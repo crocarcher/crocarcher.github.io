@@ -132,11 +132,11 @@
   /* ---------- a phone held sideways ---------- */
   @media (orientation:landscape) and (max-height:600px){
     #app{gap:2px;padding:2px;justify-content:center;height:100dvh;max-height:100dvh;overflow:hidden;}
-    #bar{gap:4px;padding:0;flex-wrap:nowrap;justify-content:center;flex:0 0 auto;}
+    #bar{gap:3px;padding:0;flex-wrap:nowrap;justify-content:center;flex:0 0 auto;}
     #bar .brand{display:none;}
-    .btn{padding:3px 7px;font-size:9px;letter-spacing:0;border-width:1px;}
-    .btn .bl{font-size:9px;}
-    #bSound svg{width:11px;height:11px;}
+    .btn{padding:2px 5px;font-size:8px;letter-spacing:0;border-width:1px;gap:3px;}
+    .btn .bl{font-size:8px;}
+    #bSound svg{width:9px;height:9px;}
     #tag{display:none;}
     #promoStrip{display:none;}
     #frame{border-width:2px;border-radius:5px;flex:0 0 auto;}
@@ -148,7 +148,7 @@
       display:block;
       width:auto;height:auto;
       aspect-ratio:960 / 600;
-      max-height:calc(100dvh - 46px);
+      max-height:calc(100dvh - 34px);
       max-width:calc(100vw - 150px);
     }
     #padL,#padR,.padLabel{align-self:center;}
@@ -337,7 +337,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;bottom:6px;right:8px;font:bold 14px monospace;color:#c9a227;z-index:60;pointer-events:none;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:4px;">BUILD 14</div>
+  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b15</div>
 </div>
 
 <div id="over">
@@ -894,22 +894,20 @@ function update(dt){
   const L = LEVELS[levelIndex];
   const sky = L.env === "sky";
 
-  /* the archer rides the cursor up and down, keys work too */
-  let want;
   if (inputMode === "touch"){
-    want = aimY;
+    /* the aim pad sets a target height; ease toward it */
+    croc.y += (Math.max(croc.minY, Math.min(croc.maxY, aimY)) - croc.y) * Math.min(1, 0.45 * dt);
   } else if (inputMode === "keys"){
-    const sp = 7.2;
-    if (keys["KeyW"] || keys["ArrowUp"])   keyTarget -= sp * dt;
-    if (keys["KeyS"] || keys["ArrowDown"]) keyTarget += sp * dt;
-    keyTarget = Math.max(croc.minY, Math.min(croc.maxY, keyTarget));
-    want = keyTarget;
+    /* direct joystick feel: hold to move, release to stop and hold position */
+    const sp = 6.5 * dt;
+    if (keys["KeyW"] || keys["ArrowUp"])   croc.y -= sp;
+    if (keys["KeyS"] || keys["ArrowDown"]) croc.y += sp;
+    croc.y = Math.max(croc.minY, Math.min(croc.maxY, croc.y));
   } else {
-    want = mouse.y - BOW_DY;   /* the bow sits exactly on the cursor */
-    if (keys["KeyW"] || keys["ArrowUp"])   want = croc.y - 6 * dt;
-    if (keys["KeyS"] || keys["ArrowDown"]) want = croc.y + 6 * dt;
+    /* mouse: the bow sits on the cursor */
+    const want = mouse.y - BOW_DY;
+    croc.y += (Math.max(croc.minY, Math.min(croc.maxY, want)) - croc.y) * Math.min(1, 0.45 * dt);
   }
-  croc.y += (Math.max(croc.minY, Math.min(croc.maxY, want)) - croc.y) * Math.min(1, (inputMode === "keys" ? 0.7 : 0.45) * dt);
 
   if (croc.cool > 0)   croc.cool   = Math.max(0, croc.cool - dt);
   if (score > hiScore) hiScore = score;
@@ -3022,8 +3020,11 @@ function enforceCanvasSize(){
     const bar = document.getElementById("bar");
     if (!cv) return;
 
+    const vvh0 = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
     const landscape = window.innerWidth > window.innerHeight;
-    const isPhoneLandscape = TOUCH && landscape && (window.innerHeight <= 700);
+    /* size for any small landscape screen (a phone), regardless of touch state,
+       so the whole rectangle is correct even before the first touch */
+    const isPhoneLandscape = landscape && vvh0 <= 600 && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 
     if (!isPhoneLandscape){
       cv.style.width = "";
