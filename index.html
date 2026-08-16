@@ -446,7 +446,7 @@
 
   <div id="promoStrip"></div>
   <div id="tag"></div>
-  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b21</div>
+  <div id="buildTag" style="position:fixed;top:2px;left:4px;font:10px monospace;color:rgba(201,162,39,.45);z-index:60;pointer-events:none;">b22</div>
 </div>
 
 <div id="phoneMenu">
@@ -506,7 +506,7 @@
   </div>
   <div id="rotMsg" class="msg">
     <div class="big">HOLD YOUR PHONE HORIZONTALLY</div>
-    <div class="sub">Croc Archer is played sideways</div>
+    <div class="sub">Turn ON Auto-rotate, then hold your phone sideways to play</div>
   </div>
 </div>
 
@@ -668,6 +668,18 @@ window.addEventListener("touchstart", function onFirstTouch(e){
   window.removeEventListener("touchstart", onFirstTouch, true);
   enableTouchMode();
 }, { passive:true, capture:true });
+
+/* If a phone is rotated into landscape (auto-rotate on) WITHOUT tapping first,
+   switch straight to the phone game instead of showing the desktop-style layout.
+   looksLikePhone() keeps this off laptops. */
+function maybeEnableOnLandscape(){
+  const hasTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+  const landscape = window.innerWidth > window.innerHeight;
+  if (hasTouch && landscape && looksLikePhone()) enableTouchMode();
+}
+window.addEventListener("orientationchange", () => { setTimeout(maybeEnableOnLandscape, 60); setTimeout(maybeEnableOnLandscape, 300); });
+window.addEventListener("resize", maybeEnableOnLandscape);
+maybeEnableOnLandscape();
 let aimY = 300;                            /* the height the archer is heading for */
 let keyTarget = 300;
 let runStart = 0;          /* when this run began */
